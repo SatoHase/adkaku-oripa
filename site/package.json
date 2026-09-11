@@ -1,0 +1,7 @@
+{
+  "name": "adkaku-oripa-site",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "astro dev", "build": "astro build" },
+  "dependencies": { "astro": "^4.15.0" }
+}
