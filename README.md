@@ -43,7 +43,7 @@ Workers & Pages → Create → Pages → プロジェクト名 `adkaku-oripa`（
 2. 同じく `dry_run=false` で実行 → シートに行が増える（status: new / skip）。vision で name・guarantee が埋まっているか確認
 3. 10分以内に承認メールが届く（GASトリガー）→「承認」→ 確認画面で確定 → status: approved
 4. Actions で publish が自動起動 → Cloudflare Pages に反映 → X に投稿 → status: posted、post_url が入る
-5. 以降は cron（30分）に任せる。`npm run collect -- <site_id>` / `SITE=<site_id>` で1サイトだけ処理できる
+5. 以降は定期実行に任せる（起動は10分おき、実際の収集間隔は Variables `COLLECT_INTERVAL_MIN`、既定50分）。`npm run collect -- <site_id>` / `SITE=<site_id>` で1サイトだけ処理できる
 
 `npm run dry-run -- <site_id>` はシート・vision・X に触れずに抽出だけ試す（サイト追加時の確認用）。
 
