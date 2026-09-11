@@ -1,6 +1,7 @@
 // Google Apps Script: 承認通知 + 承認/不可の受付 + GitHubへdispatch
 // スクリプトプロパティ: SECRET（任意の長い文字列）, GITHUB_TOKEN（repo権限のPAT）,
-//   GITHUB_REPO（例 SatoHase/adkaku-oripa）, NOTIFY_TO（通知先メール）
+//   GITHUB_REPO（例 SatoHase/adkaku-oripa）, NOTIFY_TO（通知先メール）,
+//   WEBAPP_URL（「デプロイを管理」に表示されるウェブアプリのURL。トリガー実行時は getUrl() が正しいURLを返さないため必須）
 // トリガー: notifyNew を時間主導型（10分おき）で登録。ウェブアプリとしてデプロイ（自分として実行／全員アクセス可）
 const P = PropertiesService.getScriptProperties();
 const SHEET = () => SpreadsheetApp.getActive().getSheetByName("oripa");
@@ -22,7 +23,7 @@ function setCell(rowNum, col, val) {
 function notifyNew() {
   const items = rowsAsObjects().filter(r => r.status === "new");
   if (!items.length) return;
-  const base = ScriptApp.getService().getUrl();
+  const base = P.getProperty("WEBAPP_URL") || ScriptApp.getService().getUrl();
   const blocks = items.map(r => `
     <div style="border:1px solid #ccc;padding:12px;margin:8px 0">
       <b>${r.name}</b><br>${r.site_id}｜${r.price}円/口｜最低保証: ${r.guarantee_text}（${r.guarantee_value}円）<br>
@@ -45,7 +46,7 @@ function doGet(e) {
   if (!confirm) {
     const opts = a === "reject" ? `<p>理由: <select name="reason">${REJECT_REASONS.map(x => `<option>${x}</option>`).join("")}</select></p>` : "";
     return HtmlService.createHtmlOutput(`
-      <form method="get" action="${ScriptApp.getService().getUrl()}" target="_top"><input type="hidden" name="a" value="${a}"><input type="hidden" name="id" value="${id}">
+      <form method="get" action="${P.getProperty("WEBAPP_URL") || ScriptApp.getService().getUrl()}" target="_top"><input type="hidden" name="a" value="${a}"><input type="hidden" name="id" value="${id}">
       <input type="hidden" name="t" value="${t}"><input type="hidden" name="confirm" value="1">
       <h3>${a === "approve" ? "承認" : "不可"}しますか？</h3><p>${r.name}｜${r.price}円｜${r.guarantee_text}</p>${opts}
       <button style="padding:10px 20px">確定</button></form>`);
