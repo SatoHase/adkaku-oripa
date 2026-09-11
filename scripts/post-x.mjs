@@ -1,6 +1,7 @@
 // published のうち未投稿を X に投稿し posted にする（1オリパ1投稿）
 import { TwitterApi } from "twitter-api-v2";
 import { openSheet, loadRows } from "../lib/sheet.mjs";
+if (!process.env.X_API_KEY || !process.env.X_ACCESS_TOKEN) { console.log("X keys not set: skip posting"); process.exit(0); }
 const client = new TwitterApi({
   appKey: process.env.X_API_KEY, appSecret: process.env.X_API_SECRET,
   accessToken: process.env.X_ACCESS_TOKEN, accessSecret: process.env.X_ACCESS_SECRET,
