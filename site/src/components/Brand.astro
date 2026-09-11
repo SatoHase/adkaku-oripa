@@ -1,0 +1,20 @@
+---
+// サイトロゴ。ヘッダーとフッターで共有する。
+interface Props {
+  /** フッター用の少し小さい表示 */
+  small?: boolean;
+}
+const { small = false } = Astro.props;
+---
+
+<a class:list={["brand", small && "brand--sm"]} href="/" aria-label="アド確オリパ速報 トップへ">
+  <span class="brand__word" aria-hidden="true">アド確オリパ</span>
+  <span class="brand__badge" aria-hidden="true">
+    速報
+    <svg class="brand__spark" viewBox="0 0 24 20" aria-hidden="true">
+      <path d="M4.5 13 7 2.5" stroke="#f97316" />
+      <path d="M10 15 17.5 7" stroke="#f0502a" />
+      <path d="M13.5 18.5 22 15.5" stroke="#fba94c" />
+    </svg>
+  </span>
+</a>

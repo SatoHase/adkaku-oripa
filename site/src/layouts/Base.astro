@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import DetailModal from "../components/DetailModal.astro";
 import PrNote from "../components/PrNote.astro";
+import Brand from "../components/Brand.astro";
 
 interface Props {
   title: string;
@@ -54,17 +55,7 @@ const fullTitle = title === "アド確オリパ" ? title : `${title}｜アド確
   <body class={bodyClass}>
     <header class="site-header">
       <div class="container site-header__inner">
-        <a class="brand" href="/" aria-label="アド確オリパ速報 トップへ">
-          <span class="brand__word" aria-hidden="true">アド確オリパ</span>
-          <span class="brand__badge" aria-hidden="true">
-            速報
-            <svg class="brand__spark" viewBox="0 0 24 20" aria-hidden="true">
-              <path d="M4.5 13 7 2.5" stroke="#f97316" />
-              <path d="M10 15 17.5 7" stroke="#f0502a" />
-              <path d="M13.5 18.5 22 15.5" stroke="#fba94c" />
-            </svg>
-          </span>
-        </a>
+        <Brand />
         <nav class="nav">
           <a href="/about/">アド確とは</a>
           <a href="/disclaimer/">免責事項</a>
@@ -82,6 +73,7 @@ const fullTitle = title === "アド確オリパ" ? title : `${title}｜アド確
 
     <footer class="site-footer">
       <div class="container">
+        <Brand small={true} />
         <nav class="footer-nav">
           <a href="/">オリパ一覧</a>
           <a href="/about/">アド確とは・判定基準</a>
