@@ -1,0 +1,111 @@
+---
+// カードの「詳細をみる」で開く共通モーダル。内容は最小限に絞り、
+// 数値の確認と送客だけができれば足りるようにしている。
+---
+
+<dialog class="modal" data-detail-modal aria-labelledby="detail-modal-title">
+  <div class="modal__head">
+    <h2 class="modal__title" id="detail-modal-title">オリパの詳細</h2>
+    <button class="modal__close" type="button" data-modal-close aria-label="閉じる">✕</button>
+  </div>
+
+  <div class="modal__body">
+    <p class="modal__name" data-f="name"></p>
+    <div class="modal__badges">
+      <span class="badge badge--site" data-f="sitename"></span>
+      <span class="badge badge--outline" data-f="cat" hidden></span>
+    </div>
+
+    <table class="kv">
+      <tbody>
+        <tr><th scope="row">1口価格</th><td data-f="price"></td></tr>
+        <tr><th scope="row">最低保証</th><td data-f="guarantee"></td></tr>
+        <tr><th scope="row">アド額 / アド率</th><td data-f="gap"></td></tr>
+        <tr data-row="stock"><th scope="row">残り口数</th><td data-f="stock"></td></tr>
+        <tr><th scope="row">最終確認</th><td data-f="seen"></td></tr>
+      </tbody>
+    </table>
+
+    <p class="modal__note">
+      事業者表記に基づく確認時点の情報です。購入前に公式サイトで最新の内容をご確認ください。
+    </p>
+  </div>
+
+  <div class="modal__foot">
+    <a class="cta cta--lg" data-f="cta" rel="sponsored nofollow noopener" target="_blank"></a>
+    <div class="ocard__closed" data-f="closed" hidden style="margin-top:0">提供終了</div>
+  </div>
+</dialog>
+
+<script>
+  const modal = document.querySelector<HTMLDialogElement>("[data-detail-modal]");
+  if (modal) {
+    const yen = (n: number) => `${Math.round(n).toLocaleString("ja-JP")}円`;
+    const num = (n: number) => Math.round(n).toLocaleString("ja-JP");
+    const field = (k: string) => modal.querySelector<HTMLElement>(`[data-f="${k}"]`);
+
+    function relTime(iso: string) {
+      const t = new Date(iso).getTime();
+      if (!iso || Number.isNaN(t)) return "—";
+      const min = Math.floor((Date.now() - t) / 60000);
+      if (min < 1) return "たった今";
+      if (min < 60) return `${min}分前`;
+      if (min < 60 * 24) return `${Math.floor(min / 60)}時間前`;
+      if (min < 60 * 24 * 30) return `${Math.floor(min / (60 * 24))}日前`;
+      return new Date(iso).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" });
+    }
+
+    function open(card: HTMLElement) {
+      const d = card.dataset;
+      const price = Number(d.price ?? 0);
+      const guarantee = Number(d.guarantee ?? 0);
+      const gap = Number(d.gap ?? 0);
+      const rate = Number(d.rate ?? 0);
+      const ended = Boolean(d.ended);
+
+      field("name")!.textContent = d.name ?? "";
+      field("sitename")!.textContent = d.sitename ?? "";
+      const cat = field("cat")!;
+      cat.textContent = d.cat ?? "";
+      cat.hidden = !d.cat;
+
+      field("price")!.textContent = yen(price);
+      field("guarantee")!.textContent = yen(guarantee);
+      field("gap")!.textContent =
+        `${gap >= 0 ? "+" : "−"}${num(Math.abs(gap))}円 / ${(rate * 100).toFixed(rate * 100 >= 100 ? 1 : 0)}%`;
+
+      const stockRow = modal!.querySelector<HTMLElement>('[data-row="stock"]')!;
+      if (d.left) {
+        stockRow.hidden = false;
+        field("stock")!.textContent = `${num(Number(d.left))}${d.total ? ` / ${num(Number(d.total))}` : ""} 口`;
+      } else {
+        stockRow.hidden = true;
+      }
+      field("seen")!.textContent = relTime(d.seen ?? "");
+
+      const cta = field("cta") as HTMLAnchorElement;
+      const closed = field("closed")!;
+      cta.hidden = ended;
+      closed.hidden = !ended;
+      if (!ended) {
+        cta.href = d.out ?? "#";
+        cta.textContent = `${d.sitename}で見る`;
+      }
+
+      modal!.showModal();
+    }
+
+    document.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-detail]");
+      if (!btn) return;
+      const card = btn.closest<HTMLElement>("[data-oripa]");
+      if (card) open(card);
+    });
+
+    modal.querySelector("[data-modal-close]")?.addEventListener("click", () => modal.close());
+    // 背景クリックで閉じる
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) modal.close();
+    });
+  }
+</script>

@@ -1,25 +1,122 @@
 ---
-const { title } = Astro.props;
+import "../styles/global.css";
+import DetailModal from "../components/DetailModal.astro";
+import PrNote from "../components/PrNote.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+  noindex?: boolean;
+  bodyClass?: string;
+  /** PR表記を本文冒頭に出すか。位置を変えるページだけ false にして自前で <PrNote /> を置く */
+  prNote?: boolean;
+}
+
+const {
+  title,
+  description = "ネットオリパの「アド確」（1口価格に対して事業者表記の最低保証額が同額以上）を、確認できたものだけ一覧で掲載しています。",
+  noindex = false,
+  bodyClass = "",
+  prNote = true,
+} = Astro.props;
+
+const site = Astro.site ?? new URL("https://adkaku-oripa.pages.dev/");
+const canonical = new URL(Astro.url.pathname, site).href;
+const ogImage = new URL("/og.png", site).href;
+const fullTitle = title === "アド確オリパ" ? title : `${title}｜アド確オリパ`;
 ---
+
+<!doctype html>
 <html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{title}</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 16px; line-height: 1.6; }
-    .pr { font-size: 12px; color: #666; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin: 12px 0; }
-    .ended { opacity: .5; }
-    footer { margin-top: 40px; font-size: 12px; color: #666; }
-  </style>
-</head>
-<body>
-  <p class="pr">本サイトはプロモーション（アフィリエイト広告）を含みます。</p>
-  <slot />
-  <footer>
-    <p>「アド確」は各オリパ事業者が掲載時点で表記していた最低保証額が1口価格以上であることを、当サイトが確認した情報です。当選・換金額を保証するものではありません。表記は変更される場合があるため、購入前に必ず各サイトの最新情報をご確認ください。</p>
-    <p>18歳未満の方の利用を想定したサービスではありません。</p>
-  </footer>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#1E3EE0" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="アド確オリパ" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="ja_JP" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <slot name="head" />
+  </head>
+  <body class={bodyClass}>
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <a class="brand" href="/" aria-label="アド確オリパ速報 トップへ">
+          <span class="brand__word" aria-hidden="true">アド確オリパ</span>
+          <span class="brand__badge" aria-hidden="true">
+            速報
+            <svg class="brand__spark" viewBox="0 0 24 20" aria-hidden="true">
+              <path d="M4.5 13 7 2.5" stroke="#f97316" />
+              <path d="M10 15 17.5 7" stroke="#f0502a" />
+              <path d="M13.5 18.5 22 15.5" stroke="#fba94c" />
+            </svg>
+          </span>
+        </a>
+        <nav class="nav">
+          <a href="/about/">アド確とは</a>
+          <a href="/disclaimer/">免責事項</a>
+        </nav>
+      </div>
+    </header>
+
+    <slot name="hero" />
+
+    <main class="container" style="padding-block: 12px 8px;">
+      <!-- ステマ規制対応：既定では全ページのコンテンツ冒頭にPR表記を出す -->
+      {prNote && <PrNote />}
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <nav class="footer-nav">
+          <a href="/">オリパ一覧</a>
+          <a href="/about/">アド確とは・判定基準</a>
+          <a href="/disclaimer/">免責事項</a>
+        </nav>
+        <p>
+          「アド確」とは、各オリパ事業者が掲載時点で表記していた最低保証額が、1口の購入価格以上であることを当サイトが確認した情報です。当選内容・換金額を保証するものではありません。
+        </p>
+        <p>
+          各事業者の表記・在庫・提供条件は予告なく変更されます。購入前に必ず各事業者の公式サイトで最新の内容をご確認ください。当サイトの情報に基づく購入で生じた損害について、当サイトは責任を負いません。
+        </p>
+        <p>本サイトはアフィリエイトプログラムを利用しており、掲載リンク経由の購入により当サイトが報酬を受け取る場合があります。</p>
+        <p>18歳未満の方の利用を想定したサービスではありません。</p>
+        <p class="copyright">Copyright © 2026 Andbot Inc. All Rights Reserved.</p>
+      </div>
+    </footer>
+
+    <DetailModal />
+
+    <script>
+      // 静的ビルドのため、確認時刻は配信後にクライアント側で相対表記へ置き換える
+      for (const el of document.querySelectorAll<HTMLElement>("[data-time]")) {
+        const iso = el.dataset.time!;
+        const t = new Date(iso).getTime();
+        if (Number.isNaN(t)) continue;
+        const min = Math.floor((Date.now() - t) / 60000);
+        let label: string;
+        if (min < 1) label = "たった今";
+        else if (min < 60) label = `${min}分前`;
+        else if (min < 24 * 60) label = `${Math.floor(min / 60)}時間前`;
+        else if (min < 24 * 60 * 30) label = `${Math.floor(min / (60 * 24))}日前`;
+        else continue;
+        el.textContent = el.textContent?.includes("確認") ? `${label} 確認` : label;
+        el.title = new Date(iso).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+      }
+    </script>
+  </body>
 </html>

@@ -1,0 +1,13 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="ページが見つかりません" noindex={true}>
+  <div class="empty" style="padding:48px 16px">
+    <p style="font-size:16px;font-weight:600;color:hsl(var(--foreground))">ページが見つかりません</p>
+    <p style="margin-top:6px">
+      掲載が終了したオリパのページか、URLが変更された可能性があります。
+    </p>
+    <p style="margin-top:16px"><a class="cta cta--lg" style="display:inline-flex" href="/">オリパ一覧へ</a></p>
+  </div>
+</Base>

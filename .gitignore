@@ -4,3 +4,4 @@ site/dist/
 site/src/data/oripa.json
 evidence/
 .env
+site/.astro/

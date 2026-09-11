@@ -10,6 +10,39 @@
 - `gas/Code.gs` — 承認メール送信・承認/不可受付・GitHubへdispatch
 - `site/` — Astro静的サイト（Cloudflare Pages）
 
+## サイト（`site/`）
+
+```
+site/src/lib/oripa.ts          oripa.json の読み込み・整形（アド額/アド率/残口数/サイト表示名/バッジ/色相）
+site/src/components/           OripaCard.astro（2カラムの商品カード）
+                               DetailModal.astro（「詳細をみる」の共通モーダル）
+                               PrNote.astro（PR表記。文言はここに集約）
+                               OripaThumb.astro（カテゴリ別サムネ。自作イラスト＋数値帯）
+site/src/layouts/Base.astro    PR表記（既定は本文冒頭。prNote={false} で位置を変えられる）・ヘッダー・フッター・OGP
+site/src/pages/
+  index.astro                  ファーストビュー＋開催中一覧（サイトタイル・チップ・ボトムシート絞り込み・20件ずつ追加読み込み）＋ 終了一覧（トグル）
+  oripa/[id].astro             詳細（数値・送客ボタン・下部固定CTA・同サイトの他オリパ）
+  about.astro                  アド確とは・判定基準
+  disclaimer.astro             免責事項
+  404.astro / robots.txt.ts / sitemap.xml.ts
+site/src/styles/global.css     デザイントークン（--primary #1E3EE0 / 送客ボタンは --cta オレンジ）
+site/public/                   favicon.svg / apple-touch-icon.png / og.png / hero-*.webp / logos/ / _headers
+```
+
+- UI方針は `docs/ui-spec-affiliate.md`（アフィリエイトメディア型。参考: cardchusen.com）
+- 依存は `astro` のみ。CSSフレームワークもJSフレームワークも使わない（1ページ ≒ 9.5KB gzip）
+- 絞り込み・並び替え・追加読み込み（初期20件＋「もっと見る」で20件ずつ）は静的HTML＋素のJS（`<dialog>` のボトムシート）。選択状態は localStorage に保存
+- サイトタイルには各事業者の公開ロゴを表示（`SITE_LOGOS`）。未登録の `site_id` は頭文字マークにフォールバック。出所は `docs/logo-sources.md`
+- 一覧カードのオレンジボタンは事業者への直接送客（`rel="sponsored nofollow noopener"`）。終了オリパには出さない
+- PR表記は各ページ冒頭の一行とフッターで担保する（CTAの文言には入れない）。冒頭表記はステマ規制対応なので消さないこと
+- 事業者のバナー画像は使わないため、カードのビジュアルは `OripaThumb.astro` の自作イラスト（トレカのSVG）で代替している。オリパ名から判定したカテゴリ（ポケカ/ワンピ/遊戯王など）で色とジャンルアイコンを変える。判定は名前の正規表現なので `site_id` には依存しない。IPの意匠（モンスターボール等）は使わず、一般的な題材（稲妻・錨・ピラミッド・星・クリスタル・五角形）に置き換えている。置き換え表は `docs/ui-spec-affiliate.md` §12
+- `site_id` はハードコードしない。表示名は `siteLabel()` のマップ、未知のIDはフォールバック表記になるのでサイト追加時にフロントの修正は不要
+- `site/src/data/oripa.json` は `.gitignore` 対象。無い／空のときは開発用に `oripa.sample.json` を表示する（本番ビルドでは空なら0件表示）
+- 確認時刻はビルド時に絶対時刻で出し、配信後にクライアント側で「N分前」に置き換える（静的配信でも鮮度が出る）
+
+ローカル: `cd site && npm install && npm run dev` → http://localhost:4321
+push前に `cd site && npm run build` を必ず通すこと。
+
 ## セットアップ手順
 ### 1. Google（シート・サービスアカウント）
 1. Google Cloud Console でプロジェクト作成 → 「Google Sheets API」を有効化

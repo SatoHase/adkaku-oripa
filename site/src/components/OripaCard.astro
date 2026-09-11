@@ -1,0 +1,69 @@
+---
+import OripaThumb from "./OripaThumb.astro";
+import type { OripaView } from "../lib/oripa";
+import { num, jst } from "../lib/oripa";
+
+interface Props {
+  d: OripaView;
+}
+const { d } = Astro.props;
+const outUrl = d.affiliate_url || d.url;
+---
+
+<article
+  class:list={["ocard", d.isEnded && "ocard--ended"]}
+  data-oripa
+  data-site={d.site_id}
+  data-gap={d.adGap}
+  data-rate={d.adRate}
+  data-price={d.priceNum}
+  data-seen={d.checkedAt}
+  data-stock={d.stockRatio ?? ""}
+  data-name={d.displayName}
+  data-sitename={d.siteName}
+  data-cat={d.category?.label ?? ""}
+  data-guarantee={d.guaranteeNum}
+  data-left={d.stockLeftNum ?? ""}
+  data-total={d.stockTotalNum ?? ""}
+  data-out={outUrl}
+  data-ended={d.isEnded ? "1" : ""}
+>
+  <a class="ocard__frame" href={d.path} aria-label={`${d.displayName} の詳細をみる`}>
+    <OripaThumb d={d} />
+    {d.badge && <span class="ocard__flag">{d.badge}</span>}
+    {d.isEnded && <span class="ocard__flag" style="background:hsl(var(--muted-foreground))">終了</span>}
+  </a>
+
+  <div class="ocard__body">
+    <span class="ocard__site">{d.siteName}</span>
+    <a class="ocard__title" href={d.path}>{d.displayName}</a>
+
+    <p class="ocard__price">
+      {num(d.priceNum)}円 → <b>{num(d.guaranteeNum)}円</b>
+    </p>
+
+    <p class="ocard__due">
+      {
+        d.stockLeftNum !== null ? (
+          <>
+            残り {num(d.stockLeftNum)}
+            {d.stockTotalNum !== null && <> / {num(d.stockTotalNum)}</>} 口
+          </>
+        ) : (
+          <span data-time={d.checkedAt}>{jst(d.checkedAt)} 確認</span>
+        )
+      }
+    </p>
+
+    {
+      d.isEnded ? (
+        <div class="ocard__closed">提供終了</div>
+      ) : (
+        <a class="cta" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
+          オリパを見る
+        </a>
+      )
+    }
+    <button class="ocard__sub" type="button" data-detail>詳細をみる</button>
+  </div>
+</article>
