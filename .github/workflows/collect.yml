@@ -1,0 +1,44 @@
+name: collect
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      site:
+        description: "site_id（空=有効な全サイト）"
+        required: false
+        default: ""
+      dry_run:
+        description: "true=抽出確認のみ（シートに書かない）"
+        required: false
+        default: "false"
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: npm run dry-run
+        env:
+          SITE: ${{ github.event.inputs.site }}
+      - if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: npm run collect
+        env:
+          SITE: ${{ github.event.inputs.site }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: evidence, path: evidence/, retention-days: 14 }
+      # 60日無コミットでcronが止まるのを防ぐ（cron実行時のみ）
+      - if: ${{ github.event_name == 'schedule' }}
+        run: |
+          git config user.name github-actions
+          git config user.email actions@github.com
+          date -u > .last-run && git add .last-run && git commit -m "chore: heartbeat" && git push || true
