@@ -34,7 +34,9 @@ for (const site of sites) {
           if (v) { r.name ||= v.name ?? ""; r.guarantee_text ||= v.guarantee_text ?? ""; r.guarantee_value ??= v.guarantee_value; }
         }
         delete r._image;
-        await sheet.addRow({ ...r, evidence: shot, status: isAdkaku(r) ? "new" : "skip",
+        // 完売（stock_left=0）は候補にしない
+        const soldOut = String(r.stock_left).replace(/,/g, "") === "0";
+        await sheet.addRow({ ...r, evidence: shot, status: isAdkaku(r) && !soldOut ? "new" : "skip",
           first_seen_at: now(), last_seen_at: now(), misses: "0" });
         console.log(`  + ${r.id} ${r.name} price=${r.price} guarantee=${r.guarantee_value}`);
       }
