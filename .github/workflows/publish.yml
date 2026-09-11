@@ -24,7 +24,11 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy site/dist --project-name=adkaku-oripa
-      - run: npm run post
+      # X投稿はSecretsが揃っている時だけ実行（未設定ならスキップ）
+      - id: xcheck
+        run: echo "enabled=${{ secrets.X_API_KEY != '' && secrets.X_ACCESS_TOKEN != '' }}" >> $GITHUB_OUTPUT
+      - if: steps.xcheck.outputs.enabled == 'true'
+        run: npm run post
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
