@@ -1,0 +1,15 @@
+---
+import Base from "../../layouts/Base.astro";
+import data from "../../data/oripa.json";
+export function getStaticPaths() {
+  return data.map((d) => ({ params: { id: d.id }, props: { d } }));
+}
+const { d } = Astro.props;
+---
+<Base title={`${d.name}｜アド確オリパ`}>
+  <h1>{d.name}{d.status === "ended" && "（終了）"}</h1>
+  <p>1口価格: {d.price}円<br />最低保証（事業者表記）: {d.guarantee_text}</p>
+  <p>確認日時: {d.first_seen_at}</p>
+  {d.status !== "ended" && <p><a href={d.affiliate_url} rel="sponsored nofollow">オリパを見る（PR）</a></p>}
+  <p><a href="/">一覧へ戻る</a></p>
+</Base>
