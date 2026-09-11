@@ -1,6 +1,6 @@
 // シートの published/posted/ended を site/src/data/oripa.json に書き出す（Astroビルド用）
 import fs from "node:fs";
-import { openSheet, loadRows, COLUMNS } from "../lib/sheet.mjs";
+import { openSheet, loadRows, COLUMNS, batchUpdateRows } from "../lib/sheet.mjs";
 const sheet = await openSheet();
 const rows = await loadRows(sheet);
 const show = new Set(["approved", "published", "posted", "ended"]);
@@ -11,10 +11,10 @@ fs.mkdirSync("site/src/data", { recursive: true });
 fs.writeFileSync("site/src/data/oripa.json", JSON.stringify(data, null, 2));
 // approved → published へ更新し post_url を書き戻す
 const base = process.env.SITE_BASE_URL?.replace(/\/$/, "") ?? "";
+const updates = new Map();
 for (const r of rows) {
   if (r.get("status") !== "approved") continue;
-  r.set("status", "published");
-  r.set("post_url", `${base}/oripa/${encodeURIComponent(r.get("id"))}/`);
-  await r.save();
+  updates.set(r.rowNumber, { status: "published", post_url: `${base}/oripa/${encodeURIComponent(r.get("id"))}/` });
 }
+await batchUpdateRows(sheet, updates);
 console.log(`exported ${data.length} records`);
