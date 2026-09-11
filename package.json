@@ -1,0 +1,19 @@
+{
+  "name": "adkaku-oripa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "collect": "node scripts/collect.mjs",
+    "export": "node scripts/export-data.mjs",
+    "post": "node scripts/post-x.mjs",
+    "dry-run": "node scripts/dry-run.mjs"
+  },
+  "dependencies": {
+    "google-auth-library": "^9.0.0",
+    "google-spreadsheet": "^4.1.0",
+    "playwright": "^1.47.0",
+    "twitter-api-v2": "^1.17.0",
+    "yaml": "^2.5.0",
+    "@anthropic-ai/sdk": "^0.30.0"
+  }
+}
