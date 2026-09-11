@@ -1,0 +1,18 @@
+---
+import Base from "../layouts/Base.astro";
+import data from "../data/oripa.json";
+const live = data.filter((d) => d.status !== "ended");
+const ended = data.filter((d) => d.status === "ended");
+---
+<Base title="アド確ネットオリパ一覧">
+  <h1>開催中のアド確オリパ</h1>
+  {live.length === 0 && <p>現在、掲載中のオリパはありません。</p>}
+  {live.map((d) => (
+    <div class="card">
+      <a href={`/oripa/${encodeURIComponent(d.id)}/`}><b>{d.name}</b></a><br />
+      {d.price}円/口｜最低保証: {d.guarantee_text}
+    </div>
+  ))}
+  {ended.length > 0 && <h2>終了したオリパ</h2>}
+  {ended.map((d) => <div class="card ended">{d.name}｜{d.price}円/口</div>)}
+</Base>
