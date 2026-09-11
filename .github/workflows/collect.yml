@@ -1,7 +1,7 @@
 name: collect
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/10 * * * *"   # 起動は10分おき。実際の収集間隔は COLLECT_INTERVAL_MIN で制御
   workflow_dispatch:
     inputs:
       site:
@@ -12,33 +12,52 @@ on:
         description: "true=抽出確認のみ（シートに書かない）"
         required: false
         default: "false"
+permissions:
+  contents: write   # .last-run のコミットに必要
 jobs:
   collect:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # 定期実行のみ: 前回の定期実行（.last-run）から COLLECT_INTERVAL_MIN 分（既定50）経っていなければスキップ
+      - id: gate
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then echo "run=true" >> $GITHUB_OUTPUT; exit 0; fi
+          INTERVAL=${{ vars.COLLECT_INTERVAL_MIN || 50 }}
+          LAST=$(grep -oE '^[0-9]+$' .last-run 2>/dev/null || echo 0)
+          NOW=$(date -u +%s)
+          # cronの起動遅れを吸収するため2分の余裕を持たせる
+          if [ $((NOW - LAST)) -ge $((INTERVAL * 60 - 120)) ]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+          else
+            echo "run=false" >> $GITHUB_OUTPUT
+            echo "skip: $(( (NOW - LAST) / 60 ))min since last run (< ${INTERVAL}min)"
+          fi
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-node@v4
         with: { node-version: 24 }
-      - run: npm install --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
-      - if: ${{ github.event.inputs.dry_run == 'true' }}
+      - if: steps.gate.outputs.run == 'true'
+        run: npm install --no-audit --no-fund
+      - if: steps.gate.outputs.run == 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.gate.outputs.run == 'true' && github.event.inputs.dry_run == 'true'
         run: npm run dry-run
         env:
           SITE: ${{ github.event.inputs.site }}
-      - if: ${{ github.event.inputs.dry_run != 'true' }}
+      - if: steps.gate.outputs.run == 'true' && github.event.inputs.dry_run != 'true'
         run: npm run collect
         env:
           SITE: ${{ github.event.inputs.site }}
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      - uses: actions/upload-artifact@v4
-        if: always()
+      - if: always() && steps.gate.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
         with: { name: evidence, path: evidence/, retention-days: 14 }
-      # 60日無コミットでcronが止まるのを防ぐ（cron実行時のみ）
-      - if: ${{ github.event_name == 'schedule' }}
+      # 実行時刻を記録（次回のgate判定に使用）。60日無コミットでcronが止まる対策も兼ねる
+      - if: always() && github.event_name == 'schedule' && steps.gate.outputs.run == 'true'
         run: |
           git config user.name github-actions
           git config user.email actions@github.com
-          date -u > .last-run && git add .last-run && git commit -m "chore: heartbeat" && git push || true
+          date -u +%s > .last-run && git add .last-run && git commit -m "chore: last-run" && git push
