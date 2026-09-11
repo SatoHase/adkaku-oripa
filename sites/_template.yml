@@ -28,3 +28,5 @@ dom:
     price: { selector: ".price", regex: "([0-9,]+)" }
     guarantee_text: { selector: ".guarantee" }
     detail_url: { selector: "a", attr: href }
+    # text: true → 要素全体の表示テキスト（空白は1個に正規化）に regex を当てる。セレクタが安定しない時に使う
+    stock_left: { text: true, regex: "残\\s*([0-9,]+)" }

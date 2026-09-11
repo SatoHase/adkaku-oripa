@@ -13,8 +13,10 @@ dom:
     id: { selector: "a[href^='/gachasystems/']", attr: href, regex: "/gachasystems/(\\d+)" }
     detail_url: { selector: "a[href^='/gachasystems/']", attr: href }
     banner_url: { selector: "img[alt='bannerImage']", attr: src }
-    price: { selector: "a[href^='/gachasystems/'] ~ *", regex: "([0-9,]+)" }
-    stock_total: { selector: "a[href^='/gachasystems/'] ~ * ~ *", regex: "([0-9,]+)" }
+    # カード内テキストは "1 口 10,000 PT 残 70 / 1,000" の形
+    price: { text: true, regex: "([0-9,]+)\\s*PT" }
+    stock_left: { text: true, regex: "残\\s*([0-9,]+)" }
+    stock_total: { text: true, regex: "残\\s*[0-9,]+\\s*/\\s*([0-9,]+)" }
 
 # バナー画像から name / guarantee_text を読む（新規レコードのみ実行。1件あたり数円）
 vision:
