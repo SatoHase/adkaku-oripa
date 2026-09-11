@@ -1,0 +1,25 @@
+---
+const { title } = Astro.props;
+---
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 16px; line-height: 1.6; }
+    .pr { font-size: 12px; color: #666; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin: 12px 0; }
+    .ended { opacity: .5; }
+    footer { margin-top: 40px; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <p class="pr">本サイトはプロモーション（アフィリエイト広告）を含みます。</p>
+  <slot />
+  <footer>
+    <p>「アド確」は各オリパ事業者が掲載時点で表記していた最低保証額が1口価格以上であることを、当サイトが確認した情報です。当選・換金額を保証するものではありません。表記は変更される場合があるため、購入前に必ず各サイトの最新情報をご確認ください。</p>
+    <p>18歳未満の方の利用を想定したサービスではありません。</p>
+  </footer>
+</body>
+</html>
