@@ -1,0 +1,30 @@
+# 1サイト1ファイル。ファイル名（拡張子なし）が site_id になる。
+name: DOPA
+list_url: https://dopa-game.jp/
+enabled: false
+affiliate_url_template: ""   # 例: https://px.a8.net/svt/ejp?a8mat=XXXX&a8ejpredirect={url}
+wait_ms: 8000                # 一覧描画待ち（ms）
+
+# 方式A: SPAが叩くJSON APIを横取りする（推奨）
+api:
+  url_pattern: "/api/oripa"   # レスポンスURLに含まれる文字列
+  items_path: "data.items"    # レスポンスJSON内で配列があるパス
+  fields:                     # 各要素からのパス（ドット区切り）。{id} 等はテンプレ展開
+    id: id
+    name: title
+    price: price
+    guarantee_text: guarantee_label
+    stock_total: total_count
+    stock_left: remaining_count
+    ends_at: end_at
+    detail_url: "https://example.com/oripa/{id}"
+
+# 方式B: DOMから抽出（APIが取れない場合のフォールバック）
+dom:
+  item_selector: ".oripa-card"
+  fields:
+    id: { attr: data-id }
+    name: { selector: ".title" }
+    price: { selector: ".price", regex: "([0-9,]+)" }
+    guarantee_text: { selector: ".guarantee" }
+    detail_url: { selector: "a", attr: href }

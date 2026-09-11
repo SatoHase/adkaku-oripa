@@ -1,0 +1,22 @@
+# どっかんトレカ — Next.js(RSC)。JSON APIなし。一覧はDOM抽出、名前・最低保証はバナー画像内のみ → 画像判定で補完
+name: どっかんトレカ
+enabled: true
+list_urls:
+  - https://dokkan-toreca.com/           # ポケモン
+  - https://dokkan-toreca.com/one-piece  # ワンピース
+affiliate_url_template: ""
+wait_ms: 8000
+
+dom:
+  item_selector: "li:has(a[href^='/gachasystems/'])"
+  fields:
+    id: { selector: "a[href^='/gachasystems/']", attr: href, regex: "/gachasystems/(\\d+)" }
+    detail_url: { selector: "a[href^='/gachasystems/']", attr: href }
+    banner_url: { selector: "img[alt='bannerImage']", attr: src }
+    price: { selector: "a[href^='/gachasystems/'] ~ *", regex: "([0-9,]+)" }
+    stock_total: { selector: "a[href^='/gachasystems/'] ~ * ~ *", regex: "([0-9,]+)" }
+
+# バナー画像から name / guarantee_text を読む（新規レコードのみ実行。1件あたり数円）
+vision:
+  image_field: banner_url
+  unit: PT   # このサイトの通貨単位。1PT=1円換算で扱う
