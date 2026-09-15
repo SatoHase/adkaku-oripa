@@ -6,6 +6,8 @@ import Brand from "../components/Brand.astro";
 
 interface Props {
   title: string;
+  /** 詳細ページは "article"、それ以外は "website" */
+  ogType?: "website" | "article";
   description?: string;
   noindex?: boolean;
   bodyClass?: string;
@@ -19,12 +21,17 @@ const {
   noindex = false,
   bodyClass = "",
   prNote = true,
+  ogType = "website",
 } = Astro.props;
 
 const site = Astro.site ?? new URL("https://adkaku-oripa.pages.dev/");
-const canonical = new URL(Astro.url.pathname, site).href;
-const ogImage = new URL("/og.png", site).href;
-const fullTitle = title === "アド確オリパ" ? title : `${title}｜アド確オリパ`;
+// post_url・sitemap と同じく各セグメントをエンコードする（詳細ページの id に含まれる ":" を %3A に揃える）
+const canonicalPath = Astro.url.pathname.split("/").map((seg) => encodeURIComponent(decodeURIComponent(seg))).join("/");
+const canonical = new URL(canonicalPath, site).href;
+const SITE_NAME = "アド確オリパ速報";
+const ogImage = new URL("/og.jpg", site).href;
+const ogImageAlt = "アド確オリパ速報｜アド確のオリパがリアルタイムでわかる";
+const fullTitle = title === SITE_NAME ? title : `${title}｜${SITE_NAME}`;
 ---
 
 <!doctype html>
@@ -37,19 +44,25 @@ const fullTitle = title === "アド確オリパ" ? title : `${title}｜アド確
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex, follow" />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#1E3EE0" />
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="アド確オリパ" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={SITE_NAME} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogImageAlt} />
     <meta property="og:locale" content="ja_JP" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
     <slot name="head" />
   </head>
   <body class={bodyClass}>

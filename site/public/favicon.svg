@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <rect width="64" height="64" rx="14" fill="#1E3EE0"/>
-  <path d="M32 14 L48 50 H39.5 L36.6 43 H27.4 L24.5 50 H16 Z M32 27.5 L29.4 34.5 H34.6 Z" fill="#fff"/>
+  <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ff8a3d"/><stop offset="1" stop-color="#f04e28"/></linearGradient></defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <text x="32" y="45" font-family="Hiragino Sans, 'Noto Sans JP', sans-serif" font-size="38" font-weight="800" fill="#fff" text-anchor="middle">ア</text>
 </svg>
