@@ -5,7 +5,7 @@
 // トリガー: notifyNew を時間主導型（10分おき）で登録。ウェブアプリとしてデプロイ（自分として実行／全員アクセス可）
 const P = PropertiesService.getScriptProperties();
 const SHEET = () => SpreadsheetApp.getActive().getSheetByName("oripa");
-const REJECT_REASONS = ["保証表記が不明確", "保証が虚偽の疑い", "非提携サイト", "その他"];
+const SKIPPED = () => SpreadsheetApp.getActive().getSheetByName("skipped");
 
 function sign(id, action) {
   const raw = Utilities.computeHmacSha256Signature(`${id}|${action}`, P.getProperty("SECRET"));
@@ -19,6 +19,15 @@ function setCell(rowNum, col, val) {
   const head = SHEET().getRange(1, 1, 1, SHEET().getLastColumn()).getValues()[0];
   SHEET().getRange(rowNum, head.indexOf(col) + 1).setValue(val);
 }
+// 不可: oripa から行を消し、skipped に id を記録する（再収集・再通知しない）
+function moveToSkipped(r) {
+  const sk = SKIPPED();
+  if (sk) {
+    const head = sk.getRange(1, 1, 1, sk.getLastColumn()).getValues()[0];
+    sk.appendRow(head.map(h => h === "first_seen_at" ? new Date().toISOString() : (r[h] ?? "")));
+  }
+  SHEET().deleteRow(r._row);
+}
 
 function notifyNew() {
   const items = rowsAsObjects().filter(r => r.status === "new");
@@ -26,7 +35,7 @@ function notifyNew() {
   const base = P.getProperty("WEBAPP_URL") || ScriptApp.getService().getUrl();
   const blocks = items.map(r => `
     <div style="border:1px solid #ccc;padding:12px;margin:8px 0">
-      <b>${r.name}</b><br>${r.site_id}｜${r.price}円/口｜最低保証: ${r.guarantee_text}（${r.guarantee_value}円）<br>
+      <b>${r.name}</b>${r.category_id ? `［${r.category_id}］` : ""}<br>${r.price}円/口｜最低保証: ${r.guarantee_text}（${r.guarantee_value}円）<br>
       <a href="${r.url}">元ページ</a><br>
       <a href="${base}?a=approve&id=${encodeURIComponent(r.id)}&t=${sign(r.id, "approve")}"
          style="display:inline-block;padding:8px 16px;background:#1a7f37;color:#fff;margin-top:8px">承認</a>
@@ -38,13 +47,13 @@ function notifyNew() {
 }
 
 function doGet(e) {
-  const { a, id, t, confirm, reason } = e.parameter;
+  const { a, id, t, confirm } = e.parameter;
   if (!id || sign(id, a) !== t) return HtmlService.createHtmlOutput("無効なリンクです");
   const r = rowsAsObjects().find(x => x.id === id);
   if (!r) return HtmlService.createHtmlOutput("レコードが見つかりません");
   if (!["new", "notified"].includes(r.status)) return HtmlService.createHtmlOutput(`処理済みです（${r.status}）`);
   if (!confirm) {
-    const opts = a === "reject" ? `<p>理由: <select name="reason">${REJECT_REASONS.map(x => `<option>${x}</option>`).join("")}</select></p>` : "";
+    const opts = a === "reject" ? "<p>この行は oripa から削除され、skipped に記録されます（再通知されません）。</p>" : "";
     return HtmlService.createHtmlOutput(`
       <form method="get" action="${P.getProperty("WEBAPP_URL") || ScriptApp.getService().getUrl()}" target="_top"><input type="hidden" name="a" value="${a}"><input type="hidden" name="id" value="${id}">
       <input type="hidden" name="t" value="${t}"><input type="hidden" name="confirm" value="1">
@@ -60,7 +69,6 @@ function doGet(e) {
     });
     return HtmlService.createHtmlOutput("承認しました。出稿・投稿を開始します。");
   }
-  setCell(r._row, "status", "rejected");
-  setCell(r._row, "reject_reason", reason || "");
-  return HtmlService.createHtmlOutput("不可にしました。");
+  moveToSkipped(r);
+  return HtmlService.createHtmlOutput("不可にしました（skipped に移動）。");
 }
