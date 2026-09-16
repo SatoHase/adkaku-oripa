@@ -5,7 +5,8 @@ enabled: true
 listings:
   - { category: pokemon,  url: https://dokkan-toreca.com/ }
   - { category: onepiece, url: https://dokkan-toreca.com/one-piece }
-affiliate_url_template: ""
+# A8の固定リンク（{url} を含めば元ページURLに置換される。含まなければこのURLをそのまま使う）
+affiliate_url_template: "https://px.a8.net/svt/ejp?a8mat=4BC9F4+6A8QNM+5PLE+5Z6WX&a8sns=etc"
 wait_ms: 8000
 
 dom:

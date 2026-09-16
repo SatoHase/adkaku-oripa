@@ -5,7 +5,7 @@ enabled: false
 listings:
   - { category: pokemon,  url: https://example.com/pokemon }
   - { category: onepiece, url: https://example.com/onepiece }
-affiliate_url_template: ""   # 例: https://px.a8.net/svt/ejp?a8mat=XXXX&a8ejpredirect={url}
+affiliate_url_template: ""   # 例: https://px.a8.net/svt/ejp?a8mat=XXXX&a8sns=etc（固定リンク）。{url} を含めると元ページURLに置換（A8側がリダイレクト許可している場合のみ）
 wait_ms: 8000                # 一覧描画待ち（ms）
 
 # 方式A: SPAが叩くJSON APIを横取りする（推奨）
