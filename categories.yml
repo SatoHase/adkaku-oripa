@@ -1,0 +1,8 @@
+# 商材マスタ（CATEGORY）。サイトをまたいで共通の category_id を使う。
+# 各サイトは sites/<site_id>.yml の listings で、商材ごとの一覧ページURLを持つ。
+- category_id: pokemon
+  name: ポケモンカード
+  sort: 1
+- category_id: onepiece
+  name: ワンピースカード
+  sort: 2

@@ -16,7 +16,8 @@
 2. IAM → サービスアカウント作成 → キー（JSON）作成してダウンロード
 3. スプレッドシートを、そのサービスアカウントのメールアドレスに「編集者」で共有
 4. シート名 `oripa`、1行目に以下のヘッダー:
-   `id site_id name url price guarantee_text guarantee_value stock_total stock_left starts_at ends_at affiliate_url evidence status reject_reason first_seen_at last_seen_at post_url posted_at misses`
+   `id site_id category_id name new_user_only url price guarantee_text guarantee_value stock_total stock_left starts_at ends_at affiliate_url status first_seen_at last_seen_at post_url misses`
+   （足りない列は collect 実行時に末尾へ自動追加される）
 
 ### 2. GAS
 1. シートの 拡張機能 → Apps Script に `gas/Code.gs` を貼る
@@ -49,4 +50,6 @@ Workers & Pages → Create → Pages → プロジェクト名 `adkaku-oripa`（
 
 ## ステータス遷移
 `new`（アド確候補）→ `notified`（メール送信済）→ `approved` → `published` → `posted` → `ended`
-`rejected`（不可）は再通知しない。候補外（保証なし・価格未満・条件付き・完売）は `oripa` に入れず、シート `skipped` に id を記録して再判定を防ぐ（無ければ自動作成）。
+メールで「不可」にした行は `oripa` から削除され `skipped` に移る。候補外（保証なし・価格未満・条件付き・完売）も `oripa` に入れず `skipped` に id を記録して再判定を防ぐ（無ければ自動作成）。
+
+商材（ポケカ・ワンピ等）は `categories.yml` がマスタ。各サイトの `listings` に `{category, url}` で商材ごとの一覧ページを書くと、そこから取れたオリパに `category_id` が付く。`name` は「（新規登録限定 or ゲリラ）＋サイト名」を自動生成し、`new_user_only` は一覧のタグ（サイト定義の `new_user_only` 抽出）または読み取った文言で判定する。
