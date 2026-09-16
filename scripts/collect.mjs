@@ -1,7 +1,7 @@
 // 収集: sites/*.yml を順に処理し、シートへ新規追加・last_seen更新・終了判定を行う
 import { chromium } from "playwright";
-import { openSheet, loadRows, batchUpdateRows, openOrCreateSheet, deleteRowsPaced, SKIPPED_SHEET, SKIPPED_COLUMNS } from "../lib/sheet.mjs";
-import { isAdkaku } from "../lib/extract.mjs";
+import { openSheet, loadRows, batchUpdateRows, openOrCreateSheet, SKIPPED_SHEET, SKIPPED_COLUMNS } from "../lib/sheet.mjs";
+import { isAdkaku, isNewUserOnly, buildName } from "../lib/extract.mjs";
 import { readBanner } from "../lib/vision.mjs";
 import { loadSites, scrapeSite } from "../lib/scrape.mjs";
 
@@ -26,7 +26,7 @@ const setRow = (row, cols) => updates.set(row.rowNumber, { ...(updates.get(row.r
 
 for (const site of sites) {
   try {
-    const { results, shot } = await scrapeSite(browser, site);
+    const { results } = await scrapeSite(browser, site);
     for (const r of results) {
       seenIds.add(r.id);
       if (skippedIds.has(r.id)) continue;   // 判定済みの候補外
@@ -34,6 +34,15 @@ for (const site of sites) {
       if (row) {
         const cols = { last_seen_at: now(), misses: "0" };
         if (r.stock_left !== "") cols.stock_left = r.stock_left;
+        // 列追加前の既存行を埋める（category_id / new_user_only / name）
+        if (!row.get("category_id") && r.category_id) cols.category_id = r.category_id;
+        // アフィリンクの雛形が後から設定・変更された場合に追従する
+        if (r.affiliate_url && row.get("affiliate_url") !== r.affiliate_url) cols.affiliate_url = r.affiliate_url;
+        if (!row.get("new_user_only")) {
+          const newUser = isNewUserOnly({ ...r, name: row.get("name"), guarantee_text: row.get("guarantee_text") });
+          cols.new_user_only = newUser ? "TRUE" : "FALSE";
+          cols.name = buildName(newUser, site.name ?? site.site_id);
+        }
         setRow(row, cols);
       } else {
         if (site.vision && r._image) {
@@ -41,15 +50,20 @@ for (const site of sites) {
           if (v) { r.name ||= v.name ?? ""; r.guarantee_text ||= v.guarantee_text ?? ""; r.guarantee_value ??= v.guarantee_value; }
         }
         delete r._image;
+        // name = （新規登録限定 or ゲリラ）＋サイト名。判定は一覧のタグ or 読み取った文言
+        const newUser = isNewUserOnly(r);
+        r.new_user_only = newUser ? "TRUE" : "FALSE";
+        r.name = buildName(newUser, site.name ?? site.site_id);
         // 完売（stock_left=0）は候補にしない
         const soldOut = String(r.stock_left).replace(/,/g, "") === "0";
         if (isAdkaku(r) && !soldOut) {
-          newRows.push({ ...r, evidence: shot, status: "new", first_seen_at: now(), last_seen_at: now(), misses: "0" });
+          newRows.push({ ...r, status: "new", first_seen_at: now(), last_seen_at: now(), misses: "0" });
           console.log(`  + ${r.id} ${r.name} price=${r.price} guarantee=${r.guarantee_value}`);
         } else {
           const reason = soldOut ? "sold_out" : r.guarantee_value == null ? "no_guarantee" : r.guarantee_value < r.price ? "below_price" : "conditional";
-          newSkipped.push({ id: r.id, site_id: r.site_id, name: r.name, price: r.price, guarantee_text: r.guarantee_text,
-            guarantee_value: r.guarantee_value ?? "", reason, first_seen_at: now() });
+          console.log(`  - ${r.id} ${reason}`);
+          newSkipped.push({ id: r.id, site_id: r.site_id, category_id: r.category_id, name: r.name, price: r.price,
+            guarantee_value: r.guarantee_value ?? "", first_seen_at: now() });
         }
       }
     }
@@ -66,7 +80,7 @@ const processed = new Set(sites.map((s) => s.site_id).filter((id) => !failedSite
 for (const row of rows) {
   const st = row.get("status");
   if (!processed.has(row.get("site_id"))) continue;
-  if (seenIds.has(row.get("id")) || ["ended", "rejected", "skip"].includes(st)) continue;
+  if (seenIds.has(row.get("id")) || st === "ended") continue;
   const misses = Number(row.get("misses") || 0) + 1;
   const cols = { misses: String(misses) };
   if (misses >= ENDED_AFTER_MISSES) cols.status = "ended";
@@ -79,14 +93,4 @@ if (newSkipped.length) await skippedSheet.addRows(newSkipped);
 await batchUpdateRows(sheet, updates);
 console.log(`added=${newRows.length} skipped=${newSkipped.length} updated=${updates.size}`);
 
-// oripa に残っている status=skip の行は skipped シートへ移して削除（旧データの移行。通常は0件）
-const legacySkip = rows.filter((r) => r.get("status") === "skip");
-if (legacySkip.length) {
-  await skippedSheet.addRows(legacySkip.filter((r) => !skippedIds.has(r.get("id"))).map((r) => ({
-    id: r.get("id"), site_id: r.get("site_id"), name: r.get("name"), price: r.get("price"),
-    guarantee_text: r.get("guarantee_text"), guarantee_value: r.get("guarantee_value"), reason: "legacy", first_seen_at: r.get("first_seen_at"),
-  })));
-  await deleteRowsPaced(legacySkip);
-  console.log(`moved ${legacySkip.length} legacy skip rows to "${SKIPPED_SHEET}"`);
-}
 if (failedSites.size) process.exit(1);

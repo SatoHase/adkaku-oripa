@@ -15,8 +15,8 @@ for (const site of sites) {
     const { results, shot } = await scrapeSite(browser, site);
     const missing = results.filter((r) => r.price == null || !r.url || (!site.vision && r.guarantee_value == null));
     console.log(`[${site.site_id}] ${results.length} items, adkaku(判定可能分)=${results.filter(isAdkaku).length}, 欠損=${missing.length}, shot=${shot}`);
-    console.table(results.slice(0, 10).map(({ id, name, price, guarantee_value, stock_total, _image }) =>
-      ({ id, name: name.slice(0, 20), price, guarantee_value, stock_total, image: _image ? "yes" : "" })));
+    console.table(results.slice(0, 10).map(({ id, category_id, new_user_only, price, guarantee_value, stock_total, _image }) =>
+      ({ id, category_id, new_user_only: !!new_user_only, price, guarantee_value, stock_total, image: _image ? "yes" : "" })));
     if (missing.length) console.warn(`  欠損例: ${JSON.stringify(missing[0])}`);
   } catch (e) { failed++; console.error(String(e)); }
 }
