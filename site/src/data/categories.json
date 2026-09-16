@@ -1,0 +1,12 @@
+[
+  {
+    "category_id": "pokemon",
+    "name": "ポケモンカード",
+    "sort": 1
+  },
+  {
+    "category_id": "onepiece",
+    "name": "ワンピースカード",
+    "sort": 2
+  }
+]
