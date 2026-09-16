@@ -1,9 +1,10 @@
 # どっかんトレカ — Next.js(RSC)。JSON APIなし。一覧はDOM抽出、名前・最低保証はバナー画像内のみ → 画像判定で補完
 name: どっかんトレカ
 enabled: true
-list_urls:
-  - https://dokkan-toreca.com/           # ポケモン
-  - https://dokkan-toreca.com/one-piece  # ワンピース
+# 商材ごとの一覧ページ（SITE_LISTING）。category は categories.yml の category_id
+listings:
+  - { category: pokemon,  url: https://dokkan-toreca.com/ }
+  - { category: onepiece, url: https://dokkan-toreca.com/one-piece }
 affiliate_url_template: ""
 wait_ms: 8000
 
@@ -17,6 +18,8 @@ dom:
     price: { text: true, regex: "([0-9,]+)\\s*PT" }
     stock_left: { text: true, regex: "残\\s*([0-9,]+)" }
     stock_total: { text: true, regex: "残\\s*[0-9,]+\\s*/\\s*([0-9,]+)" }
+    # 新規登録限定タグ（カード内に文言があれば true）。無ければ vision の読取結果でも判定する
+    new_user_only: { text: true, regex: "(新規限定|新規登録|初回限定|WELCOME)" }
 
 # バナー画像から name / guarantee_text を読む（新規レコードのみ実行。1件あたり数円）
 vision:

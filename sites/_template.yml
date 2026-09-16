@@ -1,7 +1,10 @@
 # 1サイト1ファイル。ファイル名（拡張子なし）が site_id になる。
-name: サイト表示名
-list_url: https://example.com/
+name: サイト表示名            # ORIPA.name の「＋サイト名」に使う
 enabled: false
+# 商材ごとの一覧ページ（SITE_LISTING）。category は categories.yml の category_id
+listings:
+  - { category: pokemon,  url: https://example.com/pokemon }
+  - { category: onepiece, url: https://example.com/onepiece }
 affiliate_url_template: ""   # 例: https://px.a8.net/svt/ejp?a8mat=XXXX&a8ejpredirect={url}
 wait_ms: 8000                # 一覧描画待ち（ms）
 
@@ -30,3 +33,5 @@ dom:
     detail_url: { selector: "a", attr: href }
     # text: true → 要素全体の表示テキスト（空白は1個に正規化）に regex を当てる。セレクタが安定しない時に使う
     stock_left: { text: true, regex: "残\\s*([0-9,]+)" }
+    # new_user_only: 新規登録限定タグ。regex が一致すれば true（多くのサイトでは「新規限定」タグが付く）
+    new_user_only: { selector: ".tag", regex: "(新規限定|新規登録|初回限定)" }
