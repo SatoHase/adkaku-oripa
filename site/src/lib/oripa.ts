@@ -54,6 +54,7 @@ export type OripaView = Oripa & {
 const SITE_LABELS: Record<string, string> = {
   "dokkan-toreca": "どっかんトレカ",
   orikuji: "オリくじ",
+  orista: "オリスタ",
   dopa: "DOPA",
   "ex-toreca": "エクストレカ",
 };
@@ -63,6 +64,7 @@ const SITE_LABELS: Record<string, string> = {
 const SITE_LOGOS: Record<string, string> = {
   "dokkan-toreca": "/logos/dokkan-toreca.webp",
   orikuji: "/logos/orikuji.webp",
+  orista: "/logos/orista.webp",
   dopa: "/logos/dopa.webp",
   "ex-toreca": "/logos/ex-toreca.webp",
 };
