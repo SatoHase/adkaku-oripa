@@ -22,12 +22,15 @@ export type Oripa = {
   last_seen_at: string;
   post_url: string;
   posted_at: string;
+  category_id?: string; // collect が付ける商材（categories.yml の category_id）
+  new_user_only?: string; // "TRUE" なら新規登録限定
 };
 
 export type Category = { key: string; label: string; hue: number; icon: string };
 
 export type OripaView = Oripa & {
   category: Category | null;
+  kind: "新規登録限定" | "ゲリラオリパ"; // タグ表示用
   siteName: string;
   displayName: string;
   path: string;
@@ -110,6 +113,12 @@ const CATEGORIES: (Category & { re: RegExp })[] = [
   { key: "mtg", label: "MTG", hue: 152, icon: ICONS.pentagon, re: /MTG|マジック[：:]?ザ[・\s]?ギャザリング/i },
 ];
 
+// collect 側の category_id（pokemon / onepiece …）から引く。無ければ名前から推定する
+export function categoryByKey(key: string | undefined): Category | null {
+  const c = CATEGORIES.find((x) => x.key === key);
+  return c ? { key: c.key, label: c.label, hue: c.hue, icon: c.icon } : null;
+}
+
 export function detectCategory(name: string): Category | null {
   for (const c of CATEGORIES) {
     if (c.re.test(name)) return { key: c.key, label: c.label, hue: c.hue, icon: c.icon };
@@ -155,11 +164,13 @@ export function toView(d: Oripa): OripaView {
   const firstSeen = Date.parse(d.first_seen_at);
   const isNew = Number.isFinite(firstSeen) && NOW - firstSeen <= DAY;
   const isEnded = d.status === "ended";
-  const category = detectCategory(d.name ?? "");
+  const category = categoryByKey(d.category_id) ?? detectCategory(d.name ?? "");
+  const kind = /^(true|1)$/i.test(String(d.new_user_only ?? "")) ? "新規登録限定" : "ゲリラオリパ";
 
   return {
     ...d,
     category,
+    kind,
     siteName: siteLabel(d.site_id),
     displayName: d.name?.trim() || "オリパ",
     path: `/oripa/${encodeURIComponent(d.id)}/`,
