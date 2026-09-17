@@ -11,7 +11,8 @@ listings:
   - { adkaku: true,       url: "https://pengguinoripa.com/index/%E3%82%A2%E3%83%89%E7%A2%BA%E5%AE%9A" }
 adkaku_listing:
   guarantee_text: "アド確定（事業者表記：使用したpt以上のカードが排出）"
-affiliate_url_template: ""   # 例: https://px.a8.net/svt/ejp?a8mat=XXXX&a8ejpredirect={url}
+# A8リンク。{url} がオリパ詳細ページURLに置換される（a8ejpredirect で詳細ページ直リンク。動作確認済み）
+affiliate_url_template: "https://px.a8.net/svt/ejp?a8mat=4BC9F4+73EZAQ+5THE+5Z6WX&a8ejpredirect={url}"
 affiliate_imp_url: ""   # A8計測用1×1画像のsrc（https://wwwNN.a8.net/0.gif?a8mat=...）。空なら出さない
 wait_ms: 4000
 load_more: { selector: "#see_more", max_clicks: 30 }
