@@ -2,9 +2,10 @@
 import Base from "../layouts/Base.astro";
 import OripaCard from "../components/OripaCard.astro";
 import PrNote from "../components/PrNote.astro";
-import { live, ended, siteFacets, siteHue, siteLogo, jst } from "../lib/oripa";
+import { live, ended, siteFacets, kindFacets, siteLogo, jst } from "../lib/oripa";
 
 const facets = siteFacets(live);
+const kinds = kindFacets(live);
 const lastChecked = [...live, ...ended].map((d) => d.checkedAt).filter(Boolean).sort().at(-1) ?? "";
 
 // 価格帯は固定のレンジ。サイトが増えても影響しない。
@@ -17,12 +18,12 @@ const PRICE_BUCKETS = [
 ];
 
 const SORTS = [
-  { key: "gap", label: "アド額が大きい順" },
-  { key: "rate", label: "アド率が高い順" },
-  { key: "price-asc", label: "価格が安い順" },
-  { key: "price-desc", label: "価格が高い順" },
-  { key: "stock", label: "残り口数が少ない順" },
-  { key: "new", label: "確認が新しい順" },
+  { key: "gap", label: "アド額が大きい順", short: "アド額順" },
+  { key: "rate", label: "アド率が高い順", short: "アド率順" },
+  { key: "price-asc", label: "価格が安い順", short: "安い順" },
+  { key: "price-desc", label: "価格が高い順", short: "高い順" },
+  { key: "stock", label: "残り口数が少ない順", short: "残りわずか順" },
+  { key: "new", label: "確認が新しい順", short: "新しい順" },
 ];
 
 const itemList = {
@@ -50,7 +51,7 @@ const itemList = {
     <img
       src="/hero-1440.webp"
       srcset="/hero-750.webp 750w, /hero-1440.webp 1440w"
-      sizes="(min-width: 720px) 720px, 100vw"
+      sizes="(min-width: 720px) 688px, calc(100vw - 32px)"
       width="2070"
       height="760"
       alt="アド確のオリパがリアルタイムでわかる"
@@ -61,66 +62,62 @@ const itemList = {
 
   <h1 class="visually-hidden">アド確オリパ一覧</h1>
 
-  <div class="stack" style="--stack:18px">
-    <p class="text-xs muted">事業者表記の最低保証額が1口価格以上のオリパだけを掲載しています。数値は確認時点のものです。</p>
+  <p class="lead">
+    事業者表記の<b>最低保証額が1口価格以上</b>のオリパだけを掲載。数値は確認時点のものです。
+    <a href="/about/">判定基準</a>
+  </p>
+  <PrNote />
 
-    {
-      facets.length > 0 && (
-        <nav class="stack" style="--stack:8px" aria-label="サイトから探す">
-          <div class="sec">
-            <span class="sec__bar" aria-hidden="true" />
-            <h2 class="sec__title">サイトから探す</h2>
-          </div>
-          <div class="tiles__scroller">
+  {
+    live.length > 0 && (
+      <div class="toolbar" data-toolbar>
+        <div class="toolbar__row">
+          <button class="chip chip--sort" type="button" data-openchip="sort" data-active="false" aria-haspopup="dialog">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+            </svg>
+            <span data-chiplabel="sort">アド額順</span>
+          </button>
+          <button class="chip" type="button" data-openchip="filter" data-active="false" aria-haspopup="dialog">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 6h16M7 12h10M10 18h4" />
+            </svg>
+            絞り込み
+            <span class="chip__count" data-filter-count hidden />
+          </button>
+          <span class="toolbar__sep" aria-hidden="true" />
+          <div class="sitepills" role="group" aria-label="サイトで絞り込む">
+            <button class="spill" type="button" data-site-pill="" aria-pressed="true">すべて</button>
             {facets.map((f) => {
               const logo = siteLogo(f.site_id);
               return (
-                <button class="tile" data-tile={f.site_id} style={`--h:${siteHue(f.site_id)}`} aria-current="false">
-                  <span class="tile__mark" aria-hidden="true">
-                    {logo ? (
-                      <img src={logo} alt="" width="68" height="30" loading="lazy" decoding="async" />
-                    ) : (
-                      <span class="tile__initial">{f.label.slice(0, 2)}</span>
-                    )}
-                  </span>
-                  <span class="tile__name">{f.label}</span>
-                  <span class="tile__count">{f.count}件</span>
+                <button class="spill" type="button" data-site-pill={f.site_id} aria-pressed="false">
+                  {logo && <img src={logo} alt="" width="18" height="18" decoding="async" />}
+                  {f.label}
+                  <span class="spill__n">{f.count}</span>
                 </button>
               );
             })}
           </div>
-        </nav>
-      )
-    }
+        </div>
+      </div>
+    )
+  }
 
-    <PrNote />
-
+  <div class="stack" style="--stack:0">
     {
       live.length > 0 && (
-        <div class="stack" style="--stack:10px" data-controls>
-          <div class="chips">
-            <button class="chip" data-openchip="sort" data-active="false">
-              <span data-chiplabel="sort">アド額が大きい順</span>
-              <span class="chip__caret" aria-hidden="true" />
-            </button>
-            <button class="chip" data-openchip="site" data-active="false">
-              <span data-chiplabel="site">サイト</span>
-              <span class="chip__caret" aria-hidden="true" />
-            </button>
-            <button class="chip" data-openchip="price" data-active="false">
-              <span data-chiplabel="price">価格帯</span>
-              <span class="chip__caret" aria-hidden="true" />
-            </button>
-          </div>
-
-          <div class="metarow">
-            <span>全 <b data-visible-count>{live.length}</b> 件</span>
-            {lastChecked && <span>最終更新 <span data-time={lastChecked}>{jst(lastChecked)}</span></span>}
-          </div>
+        <div class="metarow" data-listtop>
+          <span>
+            <b data-visible-count>{live.length}</b> 件
+            <button class="linkbtn" type="button" data-reset hidden>条件をクリア</button>
+          </span>
+          {lastChecked && <span>最終更新 <span data-time={lastChecked}>{jst(lastChecked)}</span></span>}
         </div>
       )
     }
 
+    <h2 class="visually-hidden">開催中のオリパ</h2>
     <div class="olist" data-list>
       {live.map((d) => <OripaCard d={d} />)}
     </div>
@@ -134,21 +131,25 @@ const itemList = {
         </div>
       )
     }
-    <div class="empty" data-empty hidden>条件に合うオリパはありません。</div>
+    <div class="empty" data-empty hidden>
+      条件に合うオリパはありません。
+      <div style="margin-top:12px">
+        <button class="btn btn--outline" type="button" data-reset>条件をクリア</button>
+      </div>
+    </div>
     <button class="loadmore" type="button" data-loadmore hidden></button>
 
     {
       ended.length > 0 && (
         <details class="ended-toggle">
           <summary>
-            <span class="sec__bar" aria-hidden="true" style="background:hsl(var(--muted-foreground))" />
             <span class="sec__title">終了したオリパ</span>
             <span class="sec__count">{ended.length}件</span>
             <span class="ended-toggle__caret" aria-hidden="true" />
           </summary>
-          <div class="ended-toggle__body stack" style="--stack:10px">
-            <p class="text-xs muted">提供終了を確認したものです。過去の掲載条件の参考として残しています。</p>
-            <div class="olist">
+          <div class="ended-toggle__body">
+            <p class="text-xs muted" style="margin-bottom:4px">提供終了を確認したものです。過去の掲載条件の参考として残しています。</p>
+            <div class="olist olist--flush">
               {ended.slice(0, 30).map((d) => <OripaCard d={d} />)}
             </div>
           </div>
@@ -159,76 +160,90 @@ const itemList = {
 
   {
     live.length > 0 && (
-      <>
-        <button class="fab" data-openchip="sort" aria-label="絞り込み・並び替え">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-            <path d="M4 6h16M7 12h10M10 18h4" />
-          </svg>
-          絞り込み
-        </button>
-
-        <dialog class="sheet" data-sheet>
-          <form method="dialog">
-            <div class="sheet__head">
-              <span class="sheet__title">絞り込み・並び替え</span>
-              <button class="sheet__close" value="close" type="submit">閉じる</button>
-            </div>
-          </form>
-          <div class="sheet__body">
-            <fieldset class="sheet__group" data-group="sort">
-              <legend class="sheet__legend">並び替え</legend>
-              <div class="opts">
-                {SORTS.map((s, i) => (
-                  <label class="opt">
-                    <input type="radio" name="sort" value={s.key} checked={i === 0} />
-                    <span>{s.label}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            <fieldset class="sheet__group" data-group="site">
-              <legend class="sheet__legend">サイト</legend>
-              <div class="opts">
+      <dialog class="sheet" data-sheet aria-labelledby="sheet-title">
+        <div class="sheet__head">
+          <span class="sheet__title" id="sheet-title">並び替え・絞り込み</span>
+          <button class="sheet__close" type="button" data-sheet-close aria-label="閉じる">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+        <div class="sheet__body">
+          <fieldset class="sheet__group" data-group="sort">
+            <legend class="sheet__legend">並び替え</legend>
+            <div class="opts">
+              {SORTS.map((s, i) => (
                 <label class="opt">
-                  <input type="radio" name="site" value="" checked />
-                  <span>すべて（{live.length}）</span>
+                  <input type="radio" name="sort" value={s.key} data-short={s.short} checked={i === 0} />
+                  <span>{s.label}</span>
                 </label>
-                {facets.map((f) => (
-                  <label class="opt">
-                    <input type="radio" name="site" value={f.site_id} />
-                    <span>{f.label}（{f.count}）</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+              ))}
+            </div>
+          </fieldset>
 
-            <fieldset class="sheet__group" data-group="price">
-              <legend class="sheet__legend">1口価格</legend>
-              <div class="opts">
-                {PRICE_BUCKETS.map((b, i) => (
+          <fieldset class="sheet__group" data-group="filter">
+            <legend class="sheet__legend">サイト</legend>
+            <div class="opts">
+              <label class="opt">
+                <input type="radio" name="site" value="" checked />
+                <span>すべて</span>
+              </label>
+              {facets.map((f) => (
+                <label class="opt">
+                  <input type="radio" name="site" value={f.site_id} />
+                  <span>{f.label}<small>{f.count}</small></span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          {
+            kinds.length > 1 && (
+              <fieldset class="sheet__group">
+                <legend class="sheet__legend">参加条件</legend>
+                <div class="opts">
                   <label class="opt">
-                    <input type="radio" name="price" value={b.key} data-min={b.min} data-max={b.max} checked={i === 0} />
-                    <span>{b.label}</span>
+                    <input type="radio" name="kind" value="" checked />
+                    <span>すべて</span>
                   </label>
-                ))}
-              </div>
-            </fieldset>
-          </div>
-          <div class="sheet__foot">
-            <button class="cta cta--lg" style="width:100%" type="button" data-sheet-apply>
-              <b data-apply-count>{live.length}</b> 件を表示
-            </button>
-          </div>
-        </dialog>
-      </>
+                  {kinds.map((k) => (
+                    <label class="opt">
+                      <input type="radio" name="kind" value={k.key} />
+                      <span>{k.label}<small>{k.count}</small></span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )
+          }
+
+          <fieldset class="sheet__group">
+            <legend class="sheet__legend">1口価格</legend>
+            <div class="opts">
+              {PRICE_BUCKETS.map((b, i) => (
+                <label class="opt">
+                  <input type="radio" name="price" value={b.key} data-min={b.min} data-max={b.max} checked={i === 0} />
+                  <span>{b.label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </div>
+        <div class="sheet__foot">
+          <button class="btn btn--outline" type="button" data-reset>クリア</button>
+          <button class="btn btn--primary" type="button" data-sheet-close>
+            <b data-apply-count>{live.length}</b> 件を表示
+          </button>
+        </div>
+      </dialog>
     )
   }
 </Base>
 
 <script>
-  // 絞り込み・並び替え・ページ送り（静的HTML＋素のJSのみ。フレームワークは使わない）
+  // 並び替え・絞り込み・ページ送り（静的HTML＋素のJSのみ）。
+  // 状態はURLのクエリに持つ（?site=orista&sort=rate）。共有・戻る操作で同じ一覧が再現できるようにするため。
   const PAGE_SIZE = 20;
+  const DEFAULTS: Record<string, string> = { sort: "gap", site: "", kind: "", price: "" };
   const numFmt = new Intl.NumberFormat("ja-JP");
   const list = document.querySelector<HTMLElement>("[data-list]");
   const sheet = document.querySelector<HTMLDialogElement>("[data-sheet]");
@@ -238,13 +253,15 @@ const itemList = {
     const emptyBox = document.querySelector<HTMLElement>("[data-empty]");
     const countEl = document.querySelector<HTMLElement>("[data-visible-count]");
     const applyCountEl = sheet.querySelector<HTMLElement>("[data-apply-count]");
+    const filterCountEl = document.querySelector<HTMLElement>("[data-filter-count]");
     const loadMore = document.querySelector<HTMLButtonElement>("[data-loadmore]");
-    const tiles = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-tile]"));
+    const pills = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-site-pill]"));
+    const listTop = document.querySelector<HTMLElement>("[data-listtop]");
     const nOf = (el: HTMLElement, key: string) => Number(el.dataset[key] ?? 0);
 
-    const radios = (name: string) =>
-      Array.from(sheet.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`));
+    const radios = (name: string) => Array.from(sheet.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`));
     const checked = (name: string) => radios(name).find((r) => r.checked) ?? radios(name)[0];
+    const value = (name: string) => checked(name)?.value ?? DEFAULTS[name];
 
     const comparators: Record<string, (a: HTMLElement, b: HTMLElement) => number> = {
       gap: (a, b) => nOf(b, "gap") - nOf(a, "gap") || nOf(b, "rate") - nOf(a, "rate"),
@@ -260,37 +277,36 @@ const itemList = {
 
     let shown = PAGE_SIZE;
 
-    function setRadio(name: string, value: string) {
-      const r = radios(name).find((x) => x.value === value);
+    function setRadio(name: string, v: string) {
+      const r = radios(name).find((x) => x.value === v);
       if (r) r.checked = true;
     }
 
     function matches(card: HTMLElement) {
-      const site = checked("site").value;
+      const site = value("site");
       if (site && card.dataset.site !== site) return false;
+      const kind = value("kind");
+      if (kind && card.dataset.kind !== kind) return false;
       const p = checked("price");
       const price = nOf(card, "price");
-      if (p.dataset.min && price < Number(p.dataset.min)) return false;
-      if (p.dataset.max && price > Number(p.dataset.max)) return false;
+      if (p?.dataset.min && price < Number(p.dataset.min)) return false;
+      if (p?.dataset.max && price > Number(p.dataset.max)) return false;
       return true;
     }
 
-    function apply(reset = true) {
+    function apply({ reset = true } = {}) {
       if (reset) shown = PAGE_SIZE;
-      const sortKey = checked("sort").value;
-      const siteKey = checked("site").value;
-      const priceKey = checked("price").value;
-
+      const sortKey = value("sort");
       const matched = cards.filter(matches).sort(comparators[sortKey] ?? comparators.gap);
-      for (const c of matched) list.appendChild(c);
+      for (const c of matched) list!.appendChild(c);
 
-      if (shown > matched.length) shown = Math.max(PAGE_SIZE, Math.ceil(matched.length / PAGE_SIZE) * PAGE_SIZE);
       const visible = new Set(matched.slice(0, shown));
       for (const c of cards) c.hidden = !visible.has(c);
 
+      const total = numFmt.format(matched.length);
       if (emptyBox) emptyBox.hidden = matched.length > 0;
-      if (countEl) countEl.textContent = numFmt.format(matched.length);
-      if (applyCountEl) applyCountEl.textContent = numFmt.format(matched.length);
+      if (countEl) countEl.textContent = total;
+      if (applyCountEl) applyCountEl.textContent = total;
 
       const rest = matched.length - visible.size;
       if (loadMore) {
@@ -298,53 +314,83 @@ const itemList = {
         loadMore.textContent = `もっと見る（残り${numFmt.format(rest)}件）`;
       }
 
-      const label = (name: string) => checked(name).nextElementSibling?.textContent?.trim() ?? "";
-      const set = (name: string, text: string, active: boolean) => {
-        const el = document.querySelector<HTMLElement>(`[data-chiplabel="${name}"]`);
-        if (el) el.textContent = text;
-        el?.closest<HTMLElement>(".chip")?.setAttribute("data-active", String(active));
-      };
-      set("sort", label("sort"), sortKey !== "gap");
-      set("site", siteKey ? label("site").replace(/（.*）$/, "") : "サイト", Boolean(siteKey));
-      set("price", priceKey ? label("price") : "価格帯", Boolean(priceKey));
-      for (const t of tiles) t.setAttribute("aria-current", String(t.dataset.tile === siteKey));
+      // ツールバーの表示
+      const sortChip = document.querySelector<HTMLElement>('[data-chiplabel="sort"]');
+      if (sortChip) sortChip.textContent = checked("sort")?.dataset.short ?? "並び替え";
+      sortChip?.closest(".chip")?.setAttribute("data-active", String(sortKey !== DEFAULTS.sort));
 
-      try {
-        localStorage.setItem("ao:v2", JSON.stringify({ sortKey, siteKey, priceKey }));
-      } catch {}
+      const active = ["site", "kind", "price"].filter((k) => value(k) !== DEFAULTS[k]).length;
+      if (filterCountEl) {
+        filterCountEl.hidden = active === 0;
+        filterCountEl.textContent = String(active);
+      }
+      filterCountEl?.closest(".chip")?.setAttribute("data-active", String(active > 0));
+      for (const b of document.querySelectorAll<HTMLElement>("[data-reset]")) {
+        if (!b.closest("[data-sheet]") && !b.closest("[data-empty]")) b.hidden = active === 0 && sortKey === DEFAULTS.sort;
+      }
+      for (const p of pills) p.setAttribute("aria-pressed", String(p.dataset.sitePill === value("site")));
+
+      // URLに反映（既定値は省く）
+      const q = new URLSearchParams();
+      for (const k of Object.keys(DEFAULTS)) if (value(k) !== DEFAULTS[k]) q.set(k, value(k));
+      const qs = q.toString();
+      history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
     }
 
-    try {
-      const saved = JSON.parse(localStorage.getItem("ao:v2") ?? "{}");
-      if (saved.sortKey) setRadio("sort", saved.sortKey);
-      if (saved.siteKey) setRadio("site", saved.siteKey);
-      if (saved.priceKey) setRadio("price", saved.priceKey);
-    } catch {}
+    // ツールバーが貼り付いた状態で条件を変えたら、一覧の先頭へ戻す
+    function toListTop() {
+      if (!listTop) return;
+      const bar = document.querySelector<HTMLElement>("[data-toolbar]");
+      const offset = 57 + (bar?.offsetHeight ?? 0);
+      if (listTop.getBoundingClientRect().top < offset) {
+        window.scrollTo({ top: window.scrollY + listTop.getBoundingClientRect().top - offset, behavior: "smooth" });
+      }
+    }
+
+    function resetAll() {
+      for (const [k, v] of Object.entries(DEFAULTS)) setRadio(k, v);
+      apply();
+      toListTop();
+    }
+
+    // URL → 状態
+    const params = new URLSearchParams(location.search);
+    for (const k of Object.keys(DEFAULTS)) {
+      const v = params.get(k);
+      if (v !== null) setRadio(k, v);
+    }
 
     loadMore?.addEventListener("click", () => {
       shown += PAGE_SIZE;
-      apply(false);
+      apply({ reset: false });
     });
 
     for (const btn of document.querySelectorAll<HTMLElement>("[data-openchip]")) {
       btn.addEventListener("click", () => {
         sheet.showModal();
-        const group = sheet.querySelector<HTMLElement>(`[data-group="${btn.dataset.openchip}"]`);
-        group?.scrollIntoView({ block: "nearest" });
+        sheet.querySelector<HTMLElement>(`[data-group="${btn.dataset.openchip}"]`)?.scrollIntoView({ block: "nearest" });
       });
     }
     for (const r of sheet.querySelectorAll<HTMLInputElement>("input[type=radio]")) {
       r.addEventListener("change", () => apply());
     }
-    sheet.querySelector("[data-sheet-apply]")?.addEventListener("click", () => sheet.close());
+    for (const b of sheet.querySelectorAll("[data-sheet-close]")) {
+      b.addEventListener("click", () => sheet.close());
+    }
+    sheet.addEventListener("close", toListTop);
+    // 背景タップで閉じる
+    sheet.addEventListener("click", (e) => {
+      if (e.target === sheet) sheet.close();
+    });
+    for (const b of document.querySelectorAll("[data-reset]")) b.addEventListener("click", resetAll);
 
-    // サイトタイルはシートを開かずにその場で絞り込む
-    for (const t of tiles) {
-      t.addEventListener("click", () => {
-        const nextValue = t.getAttribute("aria-current") === "true" ? "" : (t.dataset.tile ?? "");
-        setRadio("site", nextValue);
+    // サイトのピルはシートを開かずにその場で絞り込む
+    for (const p of pills) {
+      p.addEventListener("click", () => {
+        setRadio("site", p.dataset.sitePill ?? "");
         apply();
-        list.scrollIntoView({ behavior: "smooth", block: "start" });
+        toListTop();
+        p.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
       });
     }
 

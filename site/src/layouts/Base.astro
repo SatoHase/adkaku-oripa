@@ -1,6 +1,5 @@
 ---
 import "../styles/global.css";
-import DetailModal from "../components/DetailModal.astro";
 import PrNote from "../components/PrNote.astro";
 import Brand from "../components/Brand.astro";
 
@@ -69,16 +68,16 @@ const fullTitle = title === SITE_NAME ? title : `${title}｜${SITE_NAME}`;
     <header class="site-header">
       <div class="container site-header__inner">
         <Brand />
-        <nav class="nav">
-          <a href="/about/">アド確とは</a>
-          <a href="/disclaimer/">免責事項</a>
+        <nav class="nav" aria-label="サイト内">
+          <a href="/" aria-current={Astro.url.pathname === "/" ? "page" : undefined}>一覧</a>
+          <a href="/about/" aria-current={Astro.url.pathname.startsWith("/about") ? "page" : undefined}>アド確とは</a>
         </nav>
       </div>
     </header>
 
     <slot name="hero" />
 
-    <main class="container" style="padding-block: 12px 8px;">
+    <main class="container main">
       <!-- ステマ規制対応：既定では全ページのコンテンツ冒頭にPR表記を出す -->
       {prNote && <PrNote />}
       <slot />
@@ -103,8 +102,6 @@ const fullTitle = title === SITE_NAME ? title : `${title}｜${SITE_NAME}`;
         <p class="copyright">Copyright © 2026 Andbot Inc. All Rights Reserved.</p>
       </div>
     </footer>
-
-    <DetailModal />
 
     <script>
       // 静的ビルドのため、確認時刻は配信後にクライアント側で相対表記へ置き換える

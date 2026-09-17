@@ -1,8 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import OripaCard from "../../components/OripaCard.astro";
-import OripaThumb from "../../components/OripaThumb.astro";
-import { all, yen, num, ratePct, jst } from "../../lib/oripa";
+import { all, yen, num, ratePct, jst, siteLogo } from "../../lib/oripa";
 import type { OripaView } from "../../lib/oripa";
 
 export function getStaticPaths() {
@@ -20,6 +19,8 @@ const related = all
   .slice(0, 3);
 
 const outUrl = d.affiliate_url || d.url;
+const logo = siteLogo(d.site_id);
+const stockPct = d.stockRatio !== null ? Math.max(2, Math.round(d.stockRatio * 100)) : null;
 const description = `${d.siteName}の「${d.displayName}」は1口${yen(d.priceNum)}、事業者表記の最低保証${yen(d.guaranteeNum)}（差額${num(d.adGap)}円／${ratePct(d.adRate)}）。確認時点の情報です。`;
 
 const shareUrl = new URL(d.path, Astro.site ?? "https://adkaku-oripa.pages.dev/").href;
@@ -30,65 +31,75 @@ const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareT
 <Base
   title={`${d.displayName}｜${d.siteName}`}
   description={description}
-  bodyClass={d.isEnded ? "" : "has-stickycta"}
-  ogType="article"
+    ogType="article"
 >
-  <div class="stack" style="--stack:14px">
+  <div class="stack" style="--stack:16px">
     <nav class="breadcrumb" aria-label="パンくず">
       <a href="/">オリパ一覧</a>
-      <span aria-hidden="true">/</span>
-      <span>{d.siteName}</span>
+      <span aria-hidden="true">›</span>
+      <a href={`/?site=${encodeURIComponent(d.site_id)}`}>{d.siteName}</a>
     </nav>
 
-    <OripaThumb d={d} variant="hero" />
-
-    <div class="stack" style="--stack:8px">
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <span class="badge badge--site">{d.siteName}</span>
+    <section class="summary">
+      <div class="summary__head">
+        <span class="orow__site">
+          {logo ? <img src={logo} alt="" width="20" height="20" decoding="async" /> : null}
+          <span class="orow__sitename">{d.siteName}</span>
+          {d.category && <span class="orow__cat">{d.category.label}</span>}
+        </span>
         {d.isEnded ? (
-          <span class="badge badge--outline">提供終了</span>
+          <span class="orow__kind">提供終了</span>
         ) : (
-          <span class="badge badge--default">開催中</span>
+          <span class:list={["orow__kind", `orow__kind--${d.bonusType}`]}>{d.kind}</span>
         )}
-        {d.badge && <span class="badge badge--destructive">{d.badge}</span>}
       </div>
-      <h1 style="font-size:19px;font-weight:800;letter-spacing:-0.01em;line-height:1.4">{d.displayName}</h1>
+      <h1 class="summary__title">{d.displayName}</h1>
+
+      <dl class="summary__figures">
+        <div class="summary__fig summary__fig--guar">
+          <dt>最低保証</dt>
+          <dd>{num(d.guaranteeNum)}<small>円</small></dd>
+        </div>
+        <div class="summary__fig">
+          <dt>1口価格</dt>
+          <dd>{num(d.priceNum)}<small>円</small></dd>
+        </div>
+        <div class="summary__fig">
+          <dt>アド額（率）</dt>
+          <dd class:list={[d.adGap > 0 && "is-plus"]}>
+            {d.adGap > 0 ? `+${num(d.adGap)}` : "±0"}<small>円（{ratePct(d.adRate)}）</small>
+          </dd>
+        </div>
+      </dl>
+
       {
-        d.checkedAt && (
-          <p class="text-xs muted">
-            最終確認：<span data-time={d.checkedAt}>{jst(d.checkedAt)}</span>（当サイト調べ）
-          </p>
+        d.stockLeftNum !== null && !d.isEnded && (
+          <div class:list={["orow__stock", d.isLowStock && "orow__stock--low"]}>
+            {stockPct !== null && (
+              <span class="orow__bar" aria-hidden="true">
+                <span style={`width:${stockPct}%`} />
+              </span>
+            )}
+            残り <b>{num(d.stockLeftNum)}</b>
+            {d.stockTotalNum !== null && <>/{num(d.stockTotalNum)}</>}口
+            {d.isLowStock && <em>残りわずか</em>}
+          </div>
         )
       }
-    </div>
 
-    <div class="hero-figures">
-      <div class="fig">
-        <span class="fig__label">1口価格</span>
-        <span class="fig__value">{yen(d.priceNum)}</span>
-      </div>
-      <div class="fig">
-        <span class="fig__label">最低保証</span>
-        <span class="fig__value">{yen(d.guaranteeNum)}</span>
-      </div>
-      <div class="fig fig--gap">
-        <span class="fig__label">アド額</span>
-        <span class="fig__value">{d.adGap >= 0 ? "+" : "−"}{num(Math.abs(d.adGap))}円</span>
-      </div>
-    </div>
-
-    {
-      !d.isEnded && (
-        <div class="stack" style="--stack:8px">
-          <a class="cta cta--lg" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
-            {d.siteName}でこのオリパを見る
-          </a>
-          <p class="text-xs muted" style="text-align:center">
-            リンク先は{d.siteName}の公式ページです。購入前に最新の価格・保証内容をご確認ください。
-          </p>
-        </div>
-      )
-    }
+      {
+        !d.isEnded && (
+          <div class="summary__cta" data-main-cta>
+            <a class="cta cta--lg" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
+              {d.siteName}で見る
+            </a>
+            <p class="text-xs muted">
+              {d.siteName}の公式ページが開きます{d.checkedAt && <>（<span data-time={d.checkedAt}>{jst(d.checkedAt)}</span>に確認）</>}
+            </p>
+          </div>
+        )
+      }
+    </section>
 
     {
       d.isEnded && (
@@ -108,12 +119,11 @@ const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareT
       <div class="card-content" style="padding-top:6px">
         <table class="kv">
           <tbody>
-            <tr><th scope="row">掲載サイト</th><td>{d.siteName}</td></tr>
             <tr><th scope="row">1口価格</th><td>{yen(d.priceNum)}</td></tr>
             <tr><th scope="row">最低保証の表記</th><td>{d.guarantee_text || "—"}</td></tr>
             <tr><th scope="row">最低保証（円換算）</th><td>{yen(d.guaranteeNum)}</td></tr>
             <tr>
-              <th scope="row">差額 / 倍率</th>
+              <th scope="row">アド額 / アド率</th>
               <td>{d.adGap >= 0 ? "+" : "−"}{num(Math.abs(d.adGap))}円 / {ratePct(d.adRate)}</td>
             </tr>
             {
@@ -142,21 +152,23 @@ const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareT
       </p>
     </div>
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <div class="actions">
       <a class="btn btn--outline" href="/">一覧へ戻る</a>
-      <a class="btn btn--ghost" href={xHref} rel="nofollow noopener" target="_blank">Xで共有</a>
+      <a class="btn btn--outline" href={xHref} rel="nofollow noopener" target="_blank">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2.3h3.4l-7.4 8.4 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9L.9 2.3h7l4.8 6.4zm-1.2 17.9h1.9L6.8 4.2h-2z" /></svg>
+        共有
+      </a>
     </div>
 
     {
       related.length > 0 && (
-        <div class="stack" style="--stack:10px">
-          <hr class="separator" />
+        <div class="stack" style="--stack:4px;padding-top:16px" data-related>
           <div class="sec">
             <span class="sec__bar" aria-hidden="true" />
             <h2 class="sec__title">{d.siteName}の他のアド確オリパ</h2>
             <span class="sec__count">{related.length}件</span>
           </div>
-          <div class="grid">
+          <div class="olist">
             {related.map((r) => <OripaCard d={r} />)}
           </div>
         </div>
@@ -166,7 +178,7 @@ const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareT
 
   {
     !d.isEnded && (
-      <div class="stickycta">
+      <div class="stickycta" data-stickycta hidden>
         <div class="stickycta__inner">
           <a class="cta cta--lg" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
             {d.siteName}で見る
@@ -176,3 +188,25 @@ const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareT
     )
   }
 </Base>
+
+<script>
+  // 固定CTAは「本文のボタンを通り過ぎ、関連オリパ（各行にボタンがある）に達するまで」の間だけ出す
+  const main = document.querySelector("[data-main-cta]");
+  const related = document.querySelector("[data-related]");
+  const sticky = document.querySelector<HTMLElement>("[data-stickycta]");
+  if (main && sticky && "IntersectionObserver" in window) {
+    let passedMain = false;
+    let reachedRelated = false;
+    const update = () => (sticky.hidden = !passedMain || reachedRelated);
+    new IntersectionObserver(([e]) => {
+      passedMain = !e.isIntersecting && e.boundingClientRect.top < 0;
+      update();
+    }).observe(main);
+    if (related) {
+      new IntersectionObserver(([e]) => {
+        reachedRelated = e.isIntersecting || e.boundingClientRect.top < 0;
+        update();
+      }).observe(related);
+    }
+  }
+</script>

@@ -242,3 +242,14 @@ export function jst(iso: string): string {
     minute: "2-digit",
   }).format(t);
 }
+
+// 開催中に出現する特典種別の一覧（絞り込み用）。種別の並びは固定、件数0のものは出さない。
+export function kindFacets(items: OripaView[]) {
+  const order: OripaView["bonusType"][] = ["limited", "login_bonus", "new_user"];
+  return order
+    .map((key) => {
+      const hit = items.filter((d) => d.bonusType === key);
+      return { key, label: hit[0]?.kind ?? "", count: hit.length };
+    })
+    .filter((k) => k.count > 0);
+}

@@ -1,9 +1,10 @@
 ---
 // 一覧の1行。サムネ無しのリスト形式。
-// 行の順：サイト・商材｜締切 → オリパ名 → 最低保証・1口購入額 → 特典タグ・残数・確認｜詳細 → 送客ボタン
-// 色は「緑＝最低保証」「オレンジ＝送客ボタン」の2つに絞る。site_id・category_id が増えても定義追加なしで動くこと。
+// 行の順：サイト・商材｜特典タグ → オリパ名 → 最低保証（主役）・1口価格・アド額 → 残数（取得できた時だけ）｜送客ボタン
+// 色は「緑＝最低保証・アド額」「オレンジ＝送客ボタン」の2つに絞る。
+// 取得できない情報（締切・残数）は「非公開」等で埋めず、行ごと出さない。site_id・category_id が増えても定義追加なしで動くこと。
 import type { OripaView } from "../lib/oripa";
-import { num, jst, siteLogo } from "../lib/oripa";
+import { num, jst, siteLogo, ratePct } from "../lib/oripa";
 
 interface Props {
   d: OripaView;
@@ -12,13 +13,12 @@ const { d } = Astro.props;
 const outUrl = d.affiliate_url || d.url;
 const logo = siteLogo(d.site_id);
 const hasStock = d.stockLeftNum !== null;
+const stockPct = d.stockRatio !== null ? Math.max(2, Math.round(d.stockRatio * 100)) : null;
 
-// 締切。ends_at があれば残り時間、無ければ「数量限定」（口数が尽きたら終了）
+// 締切は ends_at がある時だけ出す（無いものは口数が尽きたら終了なので、あえて表示しない）
 const endsAtMs = Date.parse(d.ends_at ?? "");
-const hasDeadline = Number.isFinite(endsAtMs);
-const remainH = hasDeadline ? Math.max(0, Math.floor((endsAtMs - Date.now()) / 3600000)) : null;
-const remainLabel =
-  remainH === null ? "" : remainH >= 48 ? `${Math.floor(remainH / 24)}日` : `${remainH}時間`;
+const remainH = Number.isFinite(endsAtMs) ? Math.max(0, Math.floor((endsAtMs - Date.now()) / 3600000)) : null;
+const remainLabel = remainH === null ? "" : remainH >= 48 ? `${Math.floor(remainH / 24)}日` : `${remainH}時間`;
 const isSoon = remainH !== null && remainH < 24;
 ---
 
@@ -26,70 +26,79 @@ const isSoon = remainH !== null && remainH < 24;
   class:list={["orow", d.isEnded && "orow--ended"]}
   data-oripa
   data-site={d.site_id}
+  data-kind={d.bonusType}
   data-gap={d.adGap}
   data-rate={d.adRate}
   data-price={d.priceNum}
   data-seen={d.checkedAt}
   data-stock={d.stockRatio ?? ""}
-  data-name={d.displayName}
-  data-sitename={d.siteName}
-  data-cat={d.category?.label ?? ""}
-  data-guarantee={d.guaranteeNum}
-  data-left={d.stockLeftNum ?? ""}
-  data-total={d.stockTotalNum ?? ""}
-  data-out={outUrl}
-  data-ended={d.isEnded ? "1" : ""}
 >
-  <div class="orow__head">
-    <span class="orow__site">
-      {logo ? <img src={logo} alt="" width="18" height="18" loading="lazy" decoding="async" /> : null}
-      {d.siteName}
-      {d.category && <span class="orow__cat">{d.category.label}</span>}
-    </span>
+  <div class="orow__main">
+    <div class="orow__head">
+      <span class="orow__site">
+        {
+          logo ? (
+            <img src={logo} alt="" width="20" height="20" loading="lazy" decoding="async" />
+          ) : (
+            <span class="orow__initial" aria-hidden="true">{d.siteName.slice(0, 1)}</span>
+          )
+        }
+        <span class="orow__sitename">{d.siteName}</span>
+        {d.category && <span class="orow__cat">{d.category.label}</span>}
+      </span>
+      <span class:list={["orow__kind", `orow__kind--${d.bonusType}`]}>{d.kind}</span>
+    </div>
+
+    <h3 class="orow__title">
+      <a href={d.path}>{d.displayName}</a>
+    </h3>
+
+    <dl class="orow__figures">
+      <div class="orow__fig orow__fig--guar">
+        <dt>最低保証</dt>
+        <dd>{num(d.guaranteeNum)}<small>円</small></dd>
+      </div>
+      <div class:list={["orow__gap", d.adGap <= 0 && "orow__gap--even"]} title={`保証 ÷ 価格 = ${ratePct(d.adRate)}`}>
+        <dt class="visually-hidden">アド額</dt>
+        <dd>{d.adGap > 0 ? `+${num(d.adGap)}円` : "同額"}</dd>
+      </div>
+      <div class="orow__fig">
+        <dt>1口</dt>
+        <dd>{num(d.priceNum)}<small>円</small></dd>
+      </div>
+    </dl>
+
     {
-      d.isEnded ? (
-        <span class="orow__when orow__when--ended">終了</span>
-      ) : hasDeadline ? (
-        <span class:list={["orow__when", isSoon && "orow__when--soon"]} title={`${jst(d.ends_at)} まで`}>
-          残り <b>{remainLabel}</b>
-        </span>
-      ) : (
-        <span class="orow__when">数量限定</span>
+      (hasStock || remainH !== null) && !d.isEnded && (
+        <div class="orow__meta">
+          {hasStock && (
+            <span class:list={["orow__stock", d.isLowStock && "orow__stock--low"]}>
+              {stockPct !== null && (
+                <span class="orow__bar" aria-hidden="true">
+                  <span style={`width:${stockPct}%`} />
+                </span>
+              )}
+              残り <b>{num(d.stockLeftNum!)}</b>
+              {d.stockTotalNum !== null && <>/{num(d.stockTotalNum)}</>}口
+              {d.isLowStock && <em>残りわずか</em>}
+            </span>
+          )}
+          {remainH !== null && (
+            <span class:list={["orow__when", isSoon && "orow__when--soon"]} title={`${jst(d.ends_at)} まで`}>
+              終了まで <b>{remainLabel}</b>
+            </span>
+          )}
+        </div>
       )
     }
   </div>
 
-  <a class="orow__title" href={d.path}>{d.displayName}</a>
-
-  <div class="orow__figures">
-    <span class="orow__fig orow__fig--guar">最低保証 <b>{num(d.guaranteeNum)}円</b></span>
-    <span class="orow__fig">1口購入額 <b>{num(d.priceNum)}円</b></span>
-  </div>
-
-  <div class="orow__meta">
-    <div class="orow__facts">
-      <span class:list={["orow__kind", `orow__kind--${d.bonusType}`]}>{d.kind}</span>
-      {
-        hasStock ? (
-          <span class:list={["orow__stock", d.isLowStock && "orow__stock--low"]}>
-            残り <b>{num(d.stockLeftNum!)}</b>
-            {d.stockTotalNum !== null && <> / {num(d.stockTotalNum)}</>}口
-          </span>
-        ) : (
-          <span class="orow__stock orow__stock--na">残数 非公開</span>
-        )
-      }
-      <span class="orow__seen"><span data-time={d.checkedAt}>{jst(d.checkedAt)}</span> 確認</span>
-    </div>
-    <button class="orow__detail" type="button" data-detail>詳細</button>
-  </div>
-
   {
     d.isEnded ? (
-      <div class="ocard__closed">提供終了</div>
+      <div class="orow__closed">提供終了</div>
     ) : (
       <a class="cta orow__cta" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
-        オリパを見る
+        {d.siteName}で見る
       </a>
     )
   }
