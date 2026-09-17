@@ -1,5 +1,5 @@
 ---
-// 一覧の1行。サムネ無しのリスト形式（サイト・商材・タグ／オリパ名／価格→保証／締切・残数／ボタン）。
+// 一覧の1行。サムネ無しのリスト形式（サイト・特典種別・商材／オリパ名／購入額・最低保証／締切・残数／ボタン）。
 // site_id・category_id が増えても定義追加なしで動くこと（表示名・ロゴは lib/oripa が解決する）。
 import type { OripaView } from "../lib/oripa";
 import { num, jst, siteLogo } from "../lib/oripa";
@@ -44,15 +44,8 @@ const remainLabel =
         {logo ? <img src={logo} alt="" width="18" height="18" loading="lazy" decoding="async" /> : null}
         {d.siteName}
       </span>
-      {
-        d.category && (
-          <span class="orow__cat" style={`--h:${d.category.hue}`}>
-            <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d={d.category.icon} /></svg>
-            {d.category.label}
-          </span>
-        )
-      }
-      <span class:list={["orow__kind", d.kind === "新規登録限定" && "orow__kind--new"]}>{d.kind}</span>
+      <span class:list={["orow__kind", `orow__kind--${d.bonusType}`]}>{d.kind}</span>
+      {d.category && <span class="orow__cat">{d.category.label}</span>}
     </div>
 
     <div class="orow__side">
@@ -74,14 +67,8 @@ const remainLabel =
   <a class="orow__title" href={d.path}>{d.displayName}</a>
 
   <div class="orow__figures">
-    <span class="orow__price">
-      1口 <b>{num(d.priceNum)}円</b>
-      <span class="orow__arrow" aria-hidden="true">→</span>
-      最低保証 <b class="orow__guar">{num(d.guaranteeNum)}円</b>
-    </span>
-    <span class="orow__gap">
-      +{num(d.adGap)}円 <small>({(d.adRate * 100).toFixed(1)}%)</small>
-    </span>
+    <span class="orow__price">1口購入額 <b>{num(d.priceNum)}円</b></span>
+    <span class="orow__price">最低保証 <b class="orow__guar">{num(d.guaranteeNum)}円</b></span>
   </div>
 
   <div class="orow__meta">
