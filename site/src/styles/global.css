@@ -573,3 +573,12 @@ body:has(.fab) .site-footer { padding-bottom: 88px; }
   .orow { padding: 16px 0 18px; }
   .orow__detail { flex-basis: 160px; }
 }
+
+/* 一覧行 v2: 特典種別（新規登録時限定／ログボ／期間限定ボーナス）を主タグに。商材は文字のみ */
+.orow__kind { height: 26px; padding: 0 9px; border-radius: 999px; font-size: 12px; }
+.orow__kind--new_user { background: hsl(340 80% 95%); color: hsl(340 70% 42%); }
+.orow__kind--login_bonus { background: hsl(200 85% 94%); color: hsl(205 75% 36%); }
+.orow__kind--limited { background: hsl(27 95% 93%); color: hsl(24 85% 38%); }
+.orow__cat { color: hsl(var(--muted-foreground)); font-weight: 600; }
+.orow__figures { justify-content: flex-start; gap: 14px; }
+.orow__price b { font-size: 16px; }
