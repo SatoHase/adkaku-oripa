@@ -1,0 +1,27 @@
+# オリスタ — Next.js。JSON APIなし（一覧はSSR）。一覧はDOM抽出、最低保証はパック画像内のみ → 画像判定で補完
+# カード文言は "89/回 残り7,721/31,900 1回ガチャ 10連ガチャ…"（残数が "?????" で非公開のものは空になる）
+# robots.txt: /ja/categories/* と /ja/oripa/pack/* は Allow（/api/ や /oripa/gacha/ は Disallow なので触らない）
+name: オリスタ
+enabled: true
+listings:
+  - { category: pokemon,  url: https://orista.jp/ja/categories/pokemon }
+  - { category: onepiece, url: https://orista.jp/ja/categories/one-piece }
+# A8リンク。{url} がオリパ詳細ページURLに置換される（a8ejpredirect で詳細ページ直リンク）
+affiliate_url_template: "https://px.a8.net/svt/ejp?a8mat=4BC9F4+6ZUDO2+5WG2+5YRHE&a8ejpredirect={url}"
+wait_ms: 8000
+
+dom:
+  item_selector: "div:has(> a[href*='/oripa/pack/'] img[alt='ガチャ画像'])"
+  fields:
+    id: { selector: "a[href*='/oripa/pack/']", attr: href, regex: "/oripa/pack/([^/?#]+)" }
+    detail_url: { selector: "a[href*='/oripa/pack/']", attr: href, regex: "^([^?#]+)" }
+    banner_url: { selector: "img[alt='ガチャ画像']", attr: src, regex: "^([^?#]+)" }
+    price: { text: true, regex: "([0-9]{1,3}(?:,[0-9]{3})*)\\s*/回" }
+    # 直後に "1回ガチャ" が続くため、桁区切りの形で数値を切る
+    stock_left: { text: true, regex: "残り\\s*([0-9]{1,3}(?:,[0-9]{3})*)\\s*/" }
+    stock_total: { text: true, regex: "残り\\s*[0-9,]+\\s*/\\s*([0-9]{1,3}(?:,[0-9]{3})*)" }
+    new_user_only: { text: true, regex: "(新規限定|新規登録|初回限定|WELCOME)" }
+
+vision:
+  image_field: banner_url
+  unit: 円   # コイン表記。1コイン=1円換算
