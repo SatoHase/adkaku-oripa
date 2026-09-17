@@ -1,10 +1,10 @@
 ---
 // 一覧の1行。サムネ無しのリスト形式。
-// 行の順：サイト・商材｜特典タグ → オリパ名 → 最低保証（主役）・1口価格・アド額 → 残数（取得できた時だけ）｜送客ボタン
-// 色は「緑＝最低保証・アド額」「オレンジ＝送客ボタン」の2つに絞る。
+// 行の順：サイト・商材｜特典タグ → オリパ名 → 最低保証（主役）・1口価格 → 残数（取得できた時だけ）｜送客ボタン
+// 色は「緑＝最低保証」「オレンジ＝送客ボタン」の2つに絞る。
 // 取得できない情報（締切・残数）は「非公開」等で埋めず、行ごと出さない。site_id・category_id が増えても定義追加なしで動くこと。
 import type { OripaView } from "../lib/oripa";
-import { num, jst, siteLogo, ratePct } from "../lib/oripa";
+import { num, jst, siteLogo } from "../lib/oripa";
 
 interface Props {
   d: OripaView;
@@ -13,7 +13,6 @@ const { d } = Astro.props;
 const outUrl = d.affiliate_url || d.url;
 const logo = siteLogo(d.site_id);
 const hasStock = d.stockLeftNum !== null;
-const stockPct = d.stockRatio !== null ? Math.max(2, Math.round(d.stockRatio * 100)) : null;
 
 // 締切は ends_at がある時だけ出す（無いものは口数が尽きたら終了なので、あえて表示しない）
 const endsAtMs = Date.parse(d.ends_at ?? "");
@@ -58,10 +57,6 @@ const isSoon = remainH !== null && remainH < 24;
         <dt>最低保証</dt>
         <dd>{num(d.guaranteeNum)}<small>円</small></dd>
       </div>
-      <div class:list={["orow__gap", d.adGap <= 0 && "orow__gap--even"]} title={`保証 ÷ 価格 = ${ratePct(d.adRate)}`}>
-        <dt class="visually-hidden">アド額</dt>
-        <dd>{d.adGap > 0 ? `+${num(d.adGap)}円` : "同額"}</dd>
-      </div>
       <div class="orow__fig">
         <dt>1口</dt>
         <dd>{num(d.priceNum)}<small>円</small></dd>
@@ -73,11 +68,6 @@ const isSoon = remainH !== null && remainH < 24;
         <div class="orow__meta">
           {hasStock && (
             <span class:list={["orow__stock", d.isLowStock && "orow__stock--low"]}>
-              {stockPct !== null && (
-                <span class="orow__bar" aria-hidden="true">
-                  <span style={`width:${stockPct}%`} />
-                </span>
-              )}
               残り <b>{num(d.stockLeftNum!)}</b>
               {d.stockTotalNum !== null && <>/{num(d.stockTotalNum)}</>}口
               {d.isLowStock && <em>残りわずか</em>}

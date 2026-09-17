@@ -20,7 +20,6 @@ const related = all
 
 const outUrl = d.affiliate_url || d.url;
 const logo = siteLogo(d.site_id);
-const stockPct = d.stockRatio !== null ? Math.max(2, Math.round(d.stockRatio * 100)) : null;
 const description = `${d.siteName}の「${d.displayName}」は1口${yen(d.priceNum)}、事業者表記の最低保証${yen(d.guaranteeNum)}（差額${num(d.adGap)}円／${ratePct(d.adRate)}）。確認時点の情報です。`;
 
 const shareUrl = new URL(d.path, Astro.site ?? "https://adkaku-oripa.pages.dev/").href;
@@ -64,22 +63,11 @@ const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareT
           <dt>1口価格</dt>
           <dd>{num(d.priceNum)}<small>円</small></dd>
         </div>
-        <div class="summary__fig">
-          <dt>アド額（率）</dt>
-          <dd class:list={[d.adGap > 0 && "is-plus"]}>
-            {d.adGap > 0 ? `+${num(d.adGap)}` : "±0"}<small>円（{ratePct(d.adRate)}）</small>
-          </dd>
-        </div>
       </dl>
 
       {
         d.stockLeftNum !== null && !d.isEnded && (
           <div class:list={["orow__stock", d.isLowStock && "orow__stock--low"]}>
-            {stockPct !== null && (
-              <span class="orow__bar" aria-hidden="true">
-                <span style={`width:${stockPct}%`} />
-              </span>
-            )}
             残り <b>{num(d.stockLeftNum)}</b>
             {d.stockTotalNum !== null && <>/{num(d.stockTotalNum)}</>}口
             {d.isLowStock && <em>残りわずか</em>}
@@ -122,10 +110,6 @@ const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareT
             <tr><th scope="row">1口価格</th><td>{yen(d.priceNum)}</td></tr>
             <tr><th scope="row">最低保証の表記</th><td>{d.guarantee_text || "—"}</td></tr>
             <tr><th scope="row">最低保証（円換算）</th><td>{yen(d.guaranteeNum)}</td></tr>
-            <tr>
-              <th scope="row">アド額 / アド率</th>
-              <td>{d.adGap >= 0 ? "+" : "−"}{num(Math.abs(d.adGap))}円 / {ratePct(d.adRate)}</td>
-            </tr>
             {
               d.stockLeftNum !== null && (
                 <tr>

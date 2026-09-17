@@ -17,8 +17,8 @@ const PRICE_BUCKETS = [
   { key: "d", label: "10,001円〜", min: "10001", max: "" },
 ];
 
+// 既定の並び（sort 未指定）は最低保証と1口の差額が大きい順。選択肢には出さない
 const SORTS = [
-  { key: "gap", label: "アド額が大きい順", short: "アド額順" },
   { key: "rate", label: "アド率が高い順", short: "アド率順" },
   { key: "price-asc", label: "価格が安い順", short: "安い順" },
   { key: "price-desc", label: "価格が高い順", short: "高い順" },
@@ -62,10 +62,6 @@ const itemList = {
 
   <h1 class="visually-hidden">アド確オリパ一覧</h1>
 
-  <p class="lead">
-    事業者表記の<b>最低保証額が1口価格以上</b>のオリパだけを掲載。数値は確認時点のものです。
-    <a href="/about/">判定基準</a>
-  </p>
   <PrNote />
 
   {
@@ -76,7 +72,7 @@ const itemList = {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
             </svg>
-            <span data-chiplabel="sort">アド額順</span>
+            <span data-chiplabel="sort">並び替え</span>
           </button>
           <button class="chip" type="button" data-openchip="filter" data-active="false" aria-haspopup="dialog">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
@@ -171,9 +167,9 @@ const itemList = {
           <fieldset class="sheet__group" data-group="sort">
             <legend class="sheet__legend">並び替え</legend>
             <div class="opts">
-              {SORTS.map((s, i) => (
+              {SORTS.map((s) => (
                 <label class="opt">
-                  <input type="radio" name="sort" value={s.key} data-short={s.short} checked={i === 0} />
+                  <input type="radio" name="sort" value={s.key} data-short={s.short} />
                   <span>{s.label}</span>
                 </label>
               ))}
@@ -243,7 +239,8 @@ const itemList = {
   // 並び替え・絞り込み・ページ送り（静的HTML＋素のJSのみ）。
   // 状態はURLのクエリに持つ（?site=orista&sort=rate）。共有・戻る操作で同じ一覧が再現できるようにするため。
   const PAGE_SIZE = 20;
-  const DEFAULTS: Record<string, string> = { sort: "gap", site: "", kind: "", price: "" };
+  // sort は既定（""）＝差額が大きい順。並び替えの選択肢には出していない
+  const DEFAULTS: Record<string, string> = { sort: "", site: "", kind: "", price: "" };
   const numFmt = new Intl.NumberFormat("ja-JP");
   const list = document.querySelector<HTMLElement>("[data-list]");
   const sheet = document.querySelector<HTMLDialogElement>("[data-sheet]");
@@ -260,7 +257,7 @@ const itemList = {
     const nOf = (el: HTMLElement, key: string) => Number(el.dataset[key] ?? 0);
 
     const radios = (name: string) => Array.from(sheet.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`));
-    const checked = (name: string) => radios(name).find((r) => r.checked) ?? radios(name)[0];
+    const checked = (name: string) => radios(name).find((r) => r.checked);
     const value = (name: string) => checked(name)?.value ?? DEFAULTS[name];
 
     const comparators: Record<string, (a: HTMLElement, b: HTMLElement) => number> = {
@@ -278,8 +275,8 @@ const itemList = {
     let shown = PAGE_SIZE;
 
     function setRadio(name: string, v: string) {
-      const r = radios(name).find((x) => x.value === v);
-      if (r) r.checked = true;
+      // 該当が無ければ（sort の既定など）すべて外す
+      for (const x of radios(name)) x.checked = x.value === v;
     }
 
     function matches(card: HTMLElement) {
