@@ -50,6 +50,7 @@ export type OripaView = Oripa & {
 // site_id → 表示名。未知の site_id はフォールバックで整形する（定義追加なしで動く）
 const SITE_LABELS: Record<string, string> = {
   "dokkan-toreca": "どっかんトレカ",
+  orikuji: "オリくじ",
   dopa: "DOPA",
   "ex-toreca": "エクストレカ",
 };
@@ -58,6 +59,7 @@ const SITE_LABELS: Record<string, string> = {
 // 未登録の site_id は null を返し、頭文字マークにフォールバックする。出所は public/logos/SOURCES.md
 const SITE_LOGOS: Record<string, string> = {
   "dokkan-toreca": "/logos/dokkan-toreca.webp",
+  orikuji: "/logos/orikuji.webp",
   dopa: "/logos/dopa.webp",
   "ex-toreca": "/logos/ex-toreca.webp",
 };
