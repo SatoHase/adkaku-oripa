@@ -1,7 +1,7 @@
 // 収集: sites/*.yml を順に処理し、シートへ新規追加・last_seen更新・終了判定を行う
 import { chromium } from "playwright";
 import { openSheet, loadRows, batchUpdateRows, openOrCreateSheet, SKIPPED_SHEET, SKIPPED_COLUMNS } from "../lib/sheet.mjs";
-import { isAdkaku, isNewUserOnly, buildName } from "../lib/extract.mjs";
+import { isAdkaku, isNewUserOnly, bonusType, buildName } from "../lib/extract.mjs";
 import { readBanner } from "../lib/vision.mjs";
 import { loadSites, scrapeSite } from "../lib/scrape.mjs";
 
@@ -38,10 +38,13 @@ for (const site of sites) {
         if (!row.get("category_id") && r.category_id) cols.category_id = r.category_id;
         // アフィリンクの雛形が後から設定・変更された場合に追従する
         if (r.affiliate_url && row.get("affiliate_url") !== r.affiliate_url) cols.affiliate_url = r.affiliate_url;
-        if (!row.get("new_user_only")) {
-          const newUser = isNewUserOnly({ ...r, name: row.get("name"), guarantee_text: row.get("guarantee_text") });
-          cols.new_user_only = newUser ? "TRUE" : "FALSE";
-          cols.name = buildName(newUser, site.name ?? site.site_id);
+        if (!row.get("new_user_only") || !row.get("bonus_type")) {
+          const probe = { ...r, name: row.get("name"), guarantee_text: row.get("guarantee_text"),
+            new_user_only: r.new_user_only || (row.get("new_user_only") === "TRUE" ? "TRUE" : null) };
+          const type = bonusType(probe);
+          cols.new_user_only = type === "new_user" ? "TRUE" : "FALSE";
+          cols.bonus_type = type;
+          cols.name = buildName(type, site.name ?? site.site_id);
         }
         setRow(row, cols);
       } else {
@@ -51,9 +54,11 @@ for (const site of sites) {
         }
         delete r._image;
         // name = （新規登録限定 or ゲリラ）＋サイト名。判定は一覧のタグ or 読み取った文言
-        const newUser = isNewUserOnly(r);
-        r.new_user_only = newUser ? "TRUE" : "FALSE";
-        r.name = buildName(newUser, site.name ?? site.site_id);
+        const type = bonusType(r);
+        r.bonus_type = type;
+        r.new_user_only = type === "new_user" ? "TRUE" : "FALSE";
+        delete r.login_bonus;
+        r.name = buildName(type, site.name ?? site.site_id);
         // 完売（stock_left=0）は候補にしない
         const soldOut = String(r.stock_left).replace(/,/g, "") === "0";
         if (isAdkaku(r) && !soldOut) {
