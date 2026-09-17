@@ -60,6 +60,7 @@ const SITE_LABELS: Record<string, string> = {
   orista: "オリスタ",
   dopa: "DOPA",
   "ex-toreca": "エクストレカ",
+  "penguin-gacha": "ペンギンガチャ",
 };
 
 // 各事業者を識別する目的で、公開ページのロゴを表示用サイズに縮小して使う（指名的使用）。
@@ -70,6 +71,7 @@ const SITE_LOGOS: Record<string, string> = {
   orista: "/logos/orista.webp",
   dopa: "/logos/dopa.webp",
   "ex-toreca": "/logos/ex-toreca.webp",
+  "penguin-gacha": "/logos/penguin-gacha.webp",
 };
 
 // site_id → A8の表示回数計測画像src（sites/*.yml の affiliate_imp_url を export が書き出す）。未生成でもビルドが通るよう glob で読む

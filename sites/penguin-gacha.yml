@@ -1,0 +1,30 @@
+# ペンギンガチャ（pengguinoripa.com）— Laravel。JSON APIなし（一覧はSSR、「もっと見る」で ?page=N を追記読み込み）
+# カード文言は "残り 245 /1000 5000 pt 1回 ガチャる 10連 ガチャる"。販売前は "COMING SOON.."、完売は "売り切れ"
+# 最低保証の金額は詳細ページの縦長画像（保証一例）にしか無いため読まない。代わりに事業者の「アド確定」タブ
+# （「使用したpt以上のカードが排出されることをアド確定と言います」と明記）に載っているものを最低保証＝1口価格とする
+# 商材は ポケモン／ワンピース タブと突き合わせて付ける。robots.txt は Disallow なし
+name: ペンギンガチャ
+enabled: true
+listings:
+  - { category: pokemon,  url: "https://pengguinoripa.com/index/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3" }
+  - { category: onepiece, url: "https://pengguinoripa.com/index/%E3%83%AF%E3%83%B3%E3%83%94%E3%83%BC%E3%82%B9" }
+  - { adkaku: true,       url: "https://pengguinoripa.com/index/%E3%82%A2%E3%83%89%E7%A2%BA%E5%AE%9A" }
+adkaku_listing:
+  guarantee_text: "アド確定（事業者表記：使用したpt以上のカードが排出）"
+affiliate_url_template: ""   # 例: https://px.a8.net/svt/ejp?a8mat=XXXX&a8ejpredirect={url}
+affiliate_imp_url: ""   # A8計測用1×1画像のsrc（https://wwwNN.a8.net/0.gif?a8mat=...）。空なら出さない
+wait_ms: 4000
+load_more: { selector: "#see_more", max_clicks: 30 }
+
+dom:
+  item_selector: ".series-item[series_id]"
+  fields:
+    id: { attr: series_id }
+    detail_url: { selector: "a[link*='/product-details/']", attr: link }
+    banner_url: { selector: ".bgimg > img", attr: data-original }
+    price: { selector: ".price .valuetext", regex: "([0-9,]+)" }
+    stock_left: { text: true, regex: "残り\\s*([0-9,]+)\\s*/" }
+    stock_total: { text: true, regex: "残り\\s*[0-9,]+\\s*/\\s*([0-9,]+)" }
+    exclude: { text: true, regex: "(COMING SOON|売り切れ)" }
+    new_user_only: { text: true, regex: "(新規限定|新規登録限定|初回限定)" }
+    login_bonus: { text: true, regex: "(1日1回|ログインボーナス|ログボ)" }

@@ -10,6 +10,11 @@ affiliate_url_template: ""   # 例: https://px.a8.net/svt/ejp?a8mat=XXXX&a8sns=e
 # 空なら計測画像は出さない。affiliate_url の a8mat と一致しない場合も出さない（誤計測防止）
 affiliate_imp_url: ""
 wait_ms: 8000                # 一覧描画待ち（ms）
+# 「もっと見る」ボタンで追記読み込みする一覧（任意）。ボタンが消えるまで押す
+# load_more: { selector: "#see_more", max_clicks: 30 }
+# 事業者自身の「アド確定」一覧がある場合（任意）：listings に { adkaku: true, url: ... } を足し、
+# 商材一覧とアド確定一覧の両方に載ったものだけを 最低保証＝1口価格 として扱う
+# adkaku_listing: { guarantee_text: "アド確定（事業者表記：…）" }
 
 # 方式A: SPAが叩くJSON APIを横取りする（推奨）
 api:
@@ -40,3 +45,5 @@ dom:
     new_user_only: { selector: ".tag", regex: "(新規限定|新規登録|初回限定)" }
     # login_bonus: ログボ系のタグ。一致すれば bonus_type=login_bonus（無ければ名前・保証文言から推定）
     login_bonus: { text: true, regex: "(1日1回|ログインボーナス|ログボ)" }
+    # exclude: 一致したら今回は見なかった扱い（販売開始前・売り切れ等。skipped に記録しない）
+    exclude: { text: true, regex: "(COMING SOON|売り切れ)" }
