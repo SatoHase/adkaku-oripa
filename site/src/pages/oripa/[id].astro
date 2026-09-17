@@ -81,6 +81,7 @@ const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareT
             <a class="cta cta--lg" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
               {d.siteName}で見る
             </a>
+            {d.impUrl && <img class="a8-imp" border="0" width="1" height="1" src={d.impUrl} alt="" />}
             <p class="text-xs muted">
               {d.siteName}の公式ページが開きます{d.checkedAt && <>（<span data-time={d.checkedAt}>{jst(d.checkedAt)}</span>に確認）</>}
             </p>

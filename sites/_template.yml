@@ -6,6 +6,9 @@ listings:
   - { category: pokemon,  url: https://example.com/pokemon }
   - { category: onepiece, url: https://example.com/onepiece }
 affiliate_url_template: ""   # 例: https://px.a8.net/svt/ejp?a8mat=XXXX&a8sns=etc（固定リンク）。{url} を含めると元ページURLに置換（A8側がリダイレクト許可している場合のみ）
+# A8の表示回数（インプレッション）計測用1×1画像の src。A8管理画面の広告リンクタグ内 <img ... src="https://wwwNN.a8.net/0.gif?a8mat=XXXX"> をそのまま貼る。
+# 空なら計測画像は出さない。affiliate_url の a8mat と一致しない場合も出さない（誤計測防止）
+affiliate_imp_url: ""
 wait_ms: 8000                # 一覧描画待ち（ms）
 
 # 方式A: SPAが叩くJSON APIを横取りする（推奨）

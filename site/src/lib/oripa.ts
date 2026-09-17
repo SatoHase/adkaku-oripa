@@ -50,6 +50,7 @@ export type OripaView = Oripa & {
   hue: number;          // サムネの色相。カテゴリがあればカテゴリ色、無ければ site_id 由来
   intensity: number;    // アド額の大きさ 0〜1（サムネの彩度に使う）
   checkedAt: string;    // ISO（最終確認）
+  impUrl: string | null; // A8の表示回数計測画像src。送客ボタンの隣に置く（無ければ出さない）
 };
 
 // site_id → 表示名。未知の site_id はフォールバックで整形する（定義追加なしで動く）
@@ -70,6 +71,26 @@ const SITE_LOGOS: Record<string, string> = {
   dopa: "/logos/dopa.webp",
   "ex-toreca": "/logos/ex-toreca.webp",
 };
+
+// site_id → A8の表示回数計測画像src（sites/*.yml の affiliate_imp_url を export が書き出す）。未生成でもビルドが通るよう glob で読む
+const affGlob = import.meta.glob<{ default: Record<string, string> }>("../data/affiliate.json", { eager: true });
+const IMP_URLS: Record<string, string> = Object.values(affGlob)[0]?.default ?? {};
+
+const a8mat = (u: string): string | null => {
+  try {
+    return new URL(u).searchParams.get("a8mat");
+  } catch {
+    return null;
+  }
+};
+
+// 送客リンクがA8リンクで、計測画像と同じ a8mat の時だけ返す（別案件の表示回数を数えない）
+export function impUrl(siteId: string, affiliateUrl: string): string | null {
+  const src = IMP_URLS[siteId];
+  if (!src || !affiliateUrl) return null;
+  const m = a8mat(affiliateUrl);
+  return m && m === a8mat(src) ? src : null;
+}
 
 export function siteLogo(siteId: string): string | null {
   return SITE_LOGOS[siteId] ?? null;
@@ -197,6 +218,7 @@ export function toView(d: Oripa): OripaView {
     hue: category ? category.hue : siteHue(d.site_id),
     intensity: Math.max(0, Math.min(1, adGap / 1000)),
     checkedAt: d.last_seen_at || d.first_seen_at || "",
+    impUrl: isEnded ? null : impUrl(d.site_id, d.affiliate_url),
   };
 }
 

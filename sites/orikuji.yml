@@ -8,6 +8,7 @@ listings:
   - { category: onepiece, url: https://orikuji.com/gacha/onepiece }
 # A8リンク。{url} がオリパ詳細ページURLに置換される（a8ejpredirect で詳細ページ直リンク。動作確認済み）
 affiliate_url_template: "https://px.a8.net/svt/ejp?a8mat=4BC9F4+69NB1U+5I52+BW0YB&a8ejpredirect={url}"
+affiliate_imp_url: ""   # A8計測用1×1画像のsrc（https://wwwNN.a8.net/0.gif?a8mat=...）。空なら出さない
 wait_ms: 8000
 
 dom:

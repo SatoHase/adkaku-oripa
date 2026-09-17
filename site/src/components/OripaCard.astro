@@ -87,9 +87,12 @@ const isSoon = remainH !== null && remainH < 24;
     d.isEnded ? (
       <div class="orow__closed">提供終了</div>
     ) : (
-      <a class="cta orow__cta" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
-        {d.siteName}で見る
-      </a>
+      <>
+        <a class="cta orow__cta" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
+          {d.siteName}で見る
+        </a>
+        {d.impUrl && <img class="a8-imp" border="0" width="1" height="1" src={d.impUrl} alt="" />}
+      </>
     )
   }
 </article>

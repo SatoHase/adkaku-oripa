@@ -17,6 +17,9 @@ fs.writeFileSync("site/src/data/categories.json", JSON.stringify(loadCategories(
 const sites = fs.readdirSync("sites").filter((f) => f.endsWith(".yml") && !f.startsWith("_")).map((f) => f.replace(/\.yml$/, ""));
 fs.writeFileSync("site/src/data/sites.json", JSON.stringify(
   Object.fromEntries(sites.map((id) => [id, loadSites(id)[0]?.name ?? id])), null, 2));
+// site_id → A8の表示回数計測画像src（未設定のサイトは含めない＝画像を出さない）
+fs.writeFileSync("site/src/data/affiliate.json", JSON.stringify(
+  Object.fromEntries(sites.map((id) => [id, String(loadSites(id)[0]?.affiliate_imp_url ?? "").trim()]).filter(([, v]) => v)), null, 2));
 
 // approved → published へ更新し post_url を書き戻す
 const base = process.env.SITE_BASE_URL?.replace(/\/$/, "") ?? "";

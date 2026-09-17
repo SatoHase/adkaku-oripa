@@ -3,6 +3,7 @@ name: エクストレカ
 list_url: https://oripa.ex-toreca.com/
 enabled: false
 affiliate_url_template: ""   # 例: https://px.a8.net/svt/ejp?a8mat=XXXX&a8ejpredirect={url}
+affiliate_imp_url: ""   # A8計測用1×1画像のsrc（https://wwwNN.a8.net/0.gif?a8mat=...）。空なら出さない
 wait_ms: 8000                # 一覧描画待ち（ms）
 
 # 方式A: SPAが叩くJSON APIを横取りする（推奨）
