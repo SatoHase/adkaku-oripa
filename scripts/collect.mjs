@@ -1,6 +1,6 @@
 // 収集: sites/*.yml を順に処理し、シートへ新規追加・last_seen更新・終了判定を行う
 import { chromium } from "playwright";
-import { openSheet, loadRows, batchUpdateRows, openOrCreateSheet, SKIPPED_SHEET, SKIPPED_COLUMNS } from "../lib/sheet.mjs";
+import { openSheet, loadRows, batchUpdateRows, openOrCreateSheet, sweepRejected, SKIPPED_SHEET, SKIPPED_COLUMNS } from "../lib/sheet.mjs";
 import { isAdkaku, isNewUserOnly, bonusType, buildName } from "../lib/extract.mjs";
 import { readBanner } from "../lib/vision.mjs";
 import { loadSites, scrapeSite } from "../lib/scrape.mjs";
@@ -10,10 +10,12 @@ const ONLY_SITE = process.env.SITE || process.argv[2] || "";   // 指定時は�
 const now = () => new Date().toISOString();
 
 const sheet = await openSheet();
-const rows = await loadRows(sheet);
-const byId = new Map(rows.map((r) => [r.get("id"), r]));
 // 候補外は oripa に残さず skipped シートに id を記録（再収集・再判定を防ぐ）
 const skippedSheet = await openOrCreateSheet(SKIPPED_SHEET, SKIPPED_COLUMNS);
+// 手動で rejected にした行を先に片付ける（行番号がずれるため、読み込みはこの後に行う）
+await sweepRejected(sheet, skippedSheet);
+const rows = await loadRows(sheet);
+const byId = new Map(rows.map((r) => [r.get("id"), r]));
 const skippedIds = new Set((await loadRows(skippedSheet)).map((r) => r.get("id")));
 const newSkipped = [];
 const browser = await chromium.launch();
