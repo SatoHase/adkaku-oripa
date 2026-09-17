@@ -1,21 +1,178 @@
 ---
 import Base from "../../layouts/Base.astro";
-import data from "../../data/oripa.json";
-import categories from "../../data/categories.json";
-import sites from "../../data/sites.json";
+import OripaCard from "../../components/OripaCard.astro";
+import OripaThumb from "../../components/OripaThumb.astro";
+import { all, yen, num, ratePct, jst } from "../../lib/oripa";
+import type { OripaView } from "../../lib/oripa";
+
 export function getStaticPaths() {
-  return data.map((d) => ({ params: { id: d.id }, props: { d } }));
+  return all.map((d) => ({ params: { id: d.id }, props: { d } }));
+}
+
+interface Props {
+  d: OripaView;
 }
 const { d } = Astro.props;
-const category = categories.find((c) => c.category_id === d.category_id)?.name ?? "";
-const siteName = sites[d.site_id] ?? d.site_id;
-const newUser = d.new_user_only === "TRUE" || d.new_user_only === "true";
+
+const related = all
+  .filter((o) => o.site_id === d.site_id && o.id !== d.id && !o.isEnded)
+  .sort((a, b) => b.adGap - a.adGap)
+  .slice(0, 3);
+
+const outUrl = d.affiliate_url || d.url;
+const description = `${d.siteName}の「${d.displayName}」は1口${yen(d.priceNum)}、事業者表記の最低保証${yen(d.guaranteeNum)}（差額${num(d.adGap)}円／${ratePct(d.adRate)}）。確認時点の情報です。`;
+
+const shareUrl = new URL(d.path, Astro.site ?? "https://adkaku-oripa.pages.dev/").href;
+const shareText = `【PR】${d.siteName}｜${d.displayName}\n1口${yen(d.priceNum)} / 最低保証${yen(d.guaranteeNum)}（差額${num(d.adGap)}円）\n※事業者表記に基づく確認時点の情報`;
+const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
 ---
-<Base title={`${d.name}｜アド確オリパ`}>
-  <h1>{d.name}{d.status === "ended" && "（終了）"}</h1>
-  <p>{siteName}{category && `｜${category}`}{newUser && "｜新規登録限定"}</p>
-  <p>1口価格: {d.price}円<br />最低保証（事業者表記）: {d.guarantee_text}</p>
-  <p>確認日時: {d.first_seen_at}</p>
-  {d.status !== "ended" && <p><a href={d.affiliate_url} rel="sponsored nofollow">オリパを見る（PR）</a></p>}
-  <p><a href="/">一覧へ戻る</a></p>
+
+<Base
+  title={`${d.displayName}｜${d.siteName}`}
+  description={description}
+  bodyClass={d.isEnded ? "" : "has-stickycta"}
+  ogType="article"
+>
+  <div class="stack" style="--stack:14px">
+    <nav class="breadcrumb" aria-label="パンくず">
+      <a href="/">オリパ一覧</a>
+      <span aria-hidden="true">/</span>
+      <span>{d.siteName}</span>
+    </nav>
+
+    <OripaThumb d={d} variant="hero" />
+
+    <div class="stack" style="--stack:8px">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span class="badge badge--site">{d.siteName}</span>
+        {d.isEnded ? (
+          <span class="badge badge--outline">提供終了</span>
+        ) : (
+          <span class="badge badge--default">開催中</span>
+        )}
+        {d.badge && <span class="badge badge--destructive">{d.badge}</span>}
+      </div>
+      <h1 style="font-size:19px;font-weight:800;letter-spacing:-0.01em;line-height:1.4">{d.displayName}</h1>
+      {
+        d.checkedAt && (
+          <p class="text-xs muted">
+            最終確認：<span data-time={d.checkedAt}>{jst(d.checkedAt)}</span>（当サイト調べ）
+          </p>
+        )
+      }
+    </div>
+
+    <div class="hero-figures">
+      <div class="fig">
+        <span class="fig__label">1口価格</span>
+        <span class="fig__value">{yen(d.priceNum)}</span>
+      </div>
+      <div class="fig">
+        <span class="fig__label">最低保証</span>
+        <span class="fig__value">{yen(d.guaranteeNum)}</span>
+      </div>
+      <div class="fig fig--gap">
+        <span class="fig__label">アド額</span>
+        <span class="fig__value">{d.adGap >= 0 ? "+" : "−"}{num(Math.abs(d.adGap))}円</span>
+      </div>
+    </div>
+
+    {
+      !d.isEnded && (
+        <div class="stack" style="--stack:8px">
+          <a class="cta cta--lg" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
+            {d.siteName}でこのオリパを見る
+          </a>
+          <p class="text-xs muted" style="text-align:center">
+            リンク先は{d.siteName}の公式ページです。購入前に最新の価格・保証内容をご確認ください。
+          </p>
+        </div>
+      )
+    }
+
+    {
+      d.isEnded && (
+        <div class="alert">
+          <div class="alert-title">このオリパは提供終了を確認しています</div>
+          <p class="alert-description">
+            当サイトの巡回で継続して確認できなくなったため、終了として扱っています。過去の掲載情報として残しています。
+          </p>
+        </div>
+      )
+    }
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">確認した内容</h2>
+      </div>
+      <div class="card-content" style="padding-top:6px">
+        <table class="kv">
+          <tbody>
+            <tr><th scope="row">掲載サイト</th><td>{d.siteName}</td></tr>
+            <tr><th scope="row">1口価格</th><td>{yen(d.priceNum)}</td></tr>
+            <tr><th scope="row">最低保証の表記</th><td>{d.guarantee_text || "—"}</td></tr>
+            <tr><th scope="row">最低保証（円換算）</th><td>{yen(d.guaranteeNum)}</td></tr>
+            <tr>
+              <th scope="row">差額 / 倍率</th>
+              <td>{d.adGap >= 0 ? "+" : "−"}{num(Math.abs(d.adGap))}円 / {ratePct(d.adRate)}</td>
+            </tr>
+            {
+              d.stockLeftNum !== null && (
+                <tr>
+                  <th scope="row">残り口数</th>
+                  <td>
+                    {num(d.stockLeftNum)}
+                    {d.stockTotalNum !== null && <> / {num(d.stockTotalNum)}</>}
+                    <span class="text-xs muted">（確認時点）</span>
+                  </td>
+                </tr>
+              )
+            }
+            {d.first_seen_at && <tr><th scope="row">初回確認</th><td>{jst(d.first_seen_at)}</td></tr>}
+            {d.checkedAt && <tr><th scope="row">最終確認</th><td>{jst(d.checkedAt)}</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="alert">
+      <div class="alert-title">購入前にご確認ください</div>
+      <p class="alert-description">
+        上記は当サイトが確認した時点で事業者サイトに表記されていた内容です。価格・最低保証・在庫は事業者側の判断で変更・終了される場合があります。「アド確」は最低保証額と1口価格の比較であり、当選内容や換金額を保証するものではありません。
+      </p>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a class="btn btn--outline" href="/">一覧へ戻る</a>
+      <a class="btn btn--ghost" href={xHref} rel="nofollow noopener" target="_blank">Xで共有</a>
+    </div>
+
+    {
+      related.length > 0 && (
+        <div class="stack" style="--stack:10px">
+          <hr class="separator" />
+          <div class="sec">
+            <span class="sec__bar" aria-hidden="true" />
+            <h2 class="sec__title">{d.siteName}の他のアド確オリパ</h2>
+            <span class="sec__count">{related.length}件</span>
+          </div>
+          <div class="grid">
+            {related.map((r) => <OripaCard d={r} />)}
+          </div>
+        </div>
+      )
+    }
+  </div>
+
+  {
+    !d.isEnded && (
+      <div class="stickycta">
+        <div class="stickycta__inner">
+          <a class="cta cta--lg" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
+            {d.siteName}で見る
+          </a>
+        </div>
+      </div>
+    )
+  }
 </Base>
