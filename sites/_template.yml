@@ -35,3 +35,5 @@ dom:
     stock_left: { text: true, regex: "残\\s*([0-9,]+)" }
     # new_user_only: 新規登録限定タグ。regex が一致すれば true（多くのサイトでは「新規限定」タグが付く）
     new_user_only: { selector: ".tag", regex: "(新規限定|新規登録|初回限定)" }
+    # login_bonus: ログボ系のタグ。一致すれば bonus_type=login_bonus（無ければ名前・保証文言から推定）
+    login_bonus: { text: true, regex: "(1日1回|ログインボーナス|ログボ)" }
