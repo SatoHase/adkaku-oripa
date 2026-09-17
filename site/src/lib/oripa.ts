@@ -24,13 +24,15 @@ export type Oripa = {
   posted_at: string;
   category_id?: string; // collect が付ける商材（categories.yml の category_id）
   new_user_only?: string; // "TRUE" なら新規登録限定
+  bonus_type?: string; // new_user / login_bonus / limited（collect が判定）
 };
 
 export type Category = { key: string; label: string; hue: number; icon: string };
 
 export type OripaView = Oripa & {
   category: Category | null;
-  kind: "新規登録限定" | "ゲリラオリパ"; // タグ表示用
+  bonusType: "new_user" | "login_bonus" | "limited";
+  kind: string; // 特典種別の表示ラベル
   siteName: string;
   displayName: string;
   path: string;
@@ -167,11 +169,15 @@ export function toView(d: Oripa): OripaView {
   const isNew = Number.isFinite(firstSeen) && NOW - firstSeen <= DAY;
   const isEnded = d.status === "ended";
   const category = categoryByKey(d.category_id) ?? detectCategory(d.name ?? "");
-  const kind = /^(true|1)$/i.test(String(d.new_user_only ?? "")) ? "新規登録限定" : "ゲリラオリパ";
+  const bonusType = (["new_user", "login_bonus", "limited"].includes(String(d.bonus_type ?? ""))
+    ? String(d.bonus_type)
+    : /^(true|1)$/i.test(String(d.new_user_only ?? "")) ? "new_user" : "limited") as OripaView["bonusType"];
+  const kind = { new_user: "新規登録時限定", login_bonus: "ログボ", limited: "期間限定ボーナス" }[bonusType];
 
   return {
     ...d,
     category,
+    bonusType,
     kind,
     siteName: siteLabel(d.site_id),
     displayName: d.name?.trim() || "オリパ",
