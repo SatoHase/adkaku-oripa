@@ -1,17 +1,27 @@
 ---
-import OripaThumb from "./OripaThumb.astro";
+// 一覧の1行。サムネ無しのリスト形式（サイト・商材・タグ／オリパ名／価格→保証／締切・残数／ボタン）。
+// site_id・category_id が増えても定義追加なしで動くこと（表示名・ロゴは lib/oripa が解決する）。
 import type { OripaView } from "../lib/oripa";
-import { num, jst } from "../lib/oripa";
+import { num, jst, siteLogo } from "../lib/oripa";
 
 interface Props {
   d: OripaView;
 }
 const { d } = Astro.props;
 const outUrl = d.affiliate_url || d.url;
+const logo = siteLogo(d.site_id);
+const hasStock = d.stockLeftNum !== null;
+
+// 締切。ends_at があれば日時＋残り時間、無ければ「数量限定」（口数が尽きたら終了）
+const endsAtMs = Date.parse(d.ends_at ?? "");
+const hasDeadline = Number.isFinite(endsAtMs);
+const remainH = hasDeadline ? Math.max(0, Math.floor((endsAtMs - Date.now()) / 3600000)) : null;
+const remainLabel =
+  remainH === null ? "" : remainH >= 48 ? `${Math.floor(remainH / 24)}日` : `${remainH}時間`;
 ---
 
 <article
-  class:list={["ocard", d.isEnded && "ocard--ended"]}
+  class:list={["orow", d.isEnded && "orow--ended"]}
   data-oripa
   data-site={d.site_id}
   data-gap={d.adGap}
@@ -28,42 +38,76 @@ const outUrl = d.affiliate_url || d.url;
   data-out={outUrl}
   data-ended={d.isEnded ? "1" : ""}
 >
-  <a class="ocard__frame" href={d.path} aria-label={`${d.displayName} の詳細をみる`}>
-    <OripaThumb d={d} />
-    {d.badge && <span class="ocard__flag">{d.badge}</span>}
-    {d.isEnded && <span class="ocard__flag" style="background:hsl(var(--muted-foreground))">終了</span>}
-  </a>
-
-  <div class="ocard__body">
-    <span class="ocard__site">{d.siteName}</span>
-    <a class="ocard__title" href={d.path}>{d.displayName}</a>
-
-    <p class="ocard__price">
-      {num(d.priceNum)}円 → <b>{num(d.guaranteeNum)}円</b>
-    </p>
-
-    <p class="ocard__due">
+  <div class="orow__top">
+    <div class="orow__tags">
+      <span class="orow__site">
+        {logo ? <img src={logo} alt="" width="18" height="18" loading="lazy" decoding="async" /> : null}
+        {d.siteName}
+      </span>
       {
-        d.stockLeftNum !== null ? (
-          <>
-            残り {num(d.stockLeftNum)}
-            {d.stockTotalNum !== null && <> / {num(d.stockTotalNum)}</>} 口
-          </>
-        ) : (
-          <span data-time={d.checkedAt}>{jst(d.checkedAt)} 確認</span>
+        d.category && (
+          <span class="orow__cat" style={`--h:${d.category.hue}`}>
+            <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d={d.category.icon} /></svg>
+            {d.category.label}
+          </span>
         )
       }
-    </p>
+      <span class:list={["orow__kind", d.kind === "新規登録限定" && "orow__kind--new"]}>{d.kind}</span>
+    </div>
 
+    <div class="orow__side">
+      {
+        d.isEnded ? (
+          <span class="orow__limited orow__limited--ended">終了</span>
+        ) : hasDeadline ? (
+          <>
+            <span class="orow__until">{jst(d.ends_at)} まで</span>
+            <span class="orow__remain">残り <b>{remainLabel}</b></span>
+          </>
+        ) : (
+          <span class="orow__limited">数量限定</span>
+        )
+      }
+    </div>
+  </div>
+
+  <a class="orow__title" href={d.path}>{d.displayName}</a>
+
+  <div class="orow__figures">
+    <span class="orow__price">
+      1口 <b>{num(d.priceNum)}円</b>
+      <span class="orow__arrow" aria-hidden="true">→</span>
+      最低保証 <b class="orow__guar">{num(d.guaranteeNum)}円</b>
+    </span>
+    <span class="orow__gap">
+      +{num(d.adGap)}円 <small>({(d.adRate * 100).toFixed(1)}%)</small>
+    </span>
+  </div>
+
+  <div class="orow__meta">
+    {
+      hasStock ? (
+        <span class:list={["orow__stock", d.isLowStock && "orow__stock--low"]}>
+          残り <b>{num(d.stockLeftNum!)}</b>
+          {d.stockTotalNum !== null && <> / {num(d.stockTotalNum)}</>} 口
+          {d.isLowStock && <em>残りわずか</em>}
+        </span>
+      ) : (
+        <span class="orow__stock orow__stock--na">残数 非公開</span>
+      )}
+    <span class="orow__seen"><span data-time={d.checkedAt}>{jst(d.checkedAt)}</span> 確認</span>
+  </div>
+
+  <div class="orow__actions">
+    <button class="orow__detail" type="button" data-detail>詳細</button>
     {
       d.isEnded ? (
-        <div class="ocard__closed">提供終了</div>
+        <div class="ocard__closed" style="margin-top:0;flex:1">提供終了</div>
       ) : (
-        <a class="cta" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
+        <a class="cta orow__cta" href={outUrl} rel="sponsored nofollow noopener" target="_blank">
           オリパを見る
         </a>
       )
     }
-    <button class="ocard__sub" type="button" data-detail>詳細をみる</button>
   </div>
 </article>
