@@ -121,7 +121,7 @@ const itemList = {
       )
     }
 
-    <div class="grid" data-list>
+    <div class="olist" data-list>
       {live.map((d) => <OripaCard d={d} />)}
     </div>
 
@@ -148,7 +148,7 @@ const itemList = {
           </summary>
           <div class="ended-toggle__body stack" style="--stack:10px">
             <p class="text-xs muted">提供終了を確認したものです。過去の掲載条件の参考として残しています。</p>
-            <div class="grid">
+            <div class="olist">
               {ended.slice(0, 30).map((d) => <OripaCard d={d} />)}
             </div>
           </div>
